@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    /* Target Environment & Libraries */
+    "target": "ES2022" /* Compiles to modern JS supported by all major browsers */,
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ] /* Injects types for HTML5 <canvas>, inputs, and modern JS */,
+    "module": "es2022" /* Matches your package.json "type": "commonjs" specification */,
+
+    /* Build Pipelines */
+    "rootDir": "./src" /* Restricts the compiler to only look inside your src/ folder */,
+    "outDir": "./dist" /* Outputs compiled JavaScript files cleanly into a dist/ folder */,
+    "sourceMap": true /* Essential for debugging your original TS code directly in browser dev tools */,
+
+    /* Type Checking Rigor */
+    "strict": true /* Enables strict type-checking to keep code healthy during fast rewrites */,
+    "noImplicitAny": true /* Stops you from accidentally introducing untyped variables */,
+    "strictNullChecks": true /* Prevents common "Cannot read property of undefined" canvas/rendering bugs */,
+    "noUnusedLocals": true /* Alerts you if you leave leftover variables behind while refactoring */,
+    "noUnusedParameters": true /* Warns about unused function arguments */,
+    "noImplicitReturns": true /* Ensures all code paths in functions return a value explicitly */,
+
+    /* Module Resolution & Interop */
+    "moduleResolution": "bundler" /* Enables standard Node-style module loading */,
+    "esModuleInterop": true /* Smooths out compatibility between different import formats */,
+    "forceConsistentCasingInFileNames": true /* Prevents sneaky import errors between Windows and Mac/Linux devs */,
+    "skipLibCheck": true /* Speeds up builds by skipping type checking of internal libraries */
+  },
+  "include": [
+    "src/**/*"
+  ] /* Compiles everything inside your source directory */,
+  "exclude": [
+    "node_modules",
+    "dist"
+  ] /* Prevents compilation of packages and past builds */
+}

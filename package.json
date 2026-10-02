@@ -1,0 +1,19 @@
+{
+  "name": "asteroids",
+  "version": "1.0.0",
+  "description": "Documentation for Asteroids ( ADD MORE LATER )",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc --watch"
+  
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

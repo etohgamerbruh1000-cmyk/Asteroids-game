@@ -1,0 +1,27 @@
+# Compiled JavaScript output (keeps your repo pure TypeScript)
+dist/
+build/
+out/
+*.js
+!src/**/*.ts
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
