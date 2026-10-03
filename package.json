@@ -1,16 +1,15 @@
 {
   "name": "asteroids",
   "version": "1.0.0",
-  "description": "Documentation for Asteroids ( ADD MORE LATER )",
-  "main": "index.js",
+  "description": "Asteroids is a game that is made in vanilla typescript. Please note that all of this is WIP, please try to treat my code as if it is going to change or get reworked. 1. Controls W accelerate forward S accelerate backward / brake A strafe left D strafe right Q rotate left E rotate right Space shoot Shift special thrust/boost",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "watch": "tsc --watch"
-  
   },
   "keywords": [],
-  "author": "",
+  "author": "jacob",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {

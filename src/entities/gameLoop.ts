@@ -1,6 +1,6 @@
 // gameLoop.ts
 
-import { ship } from "./ship";
+import { ship } from "./ship.js";
 
 // high-precision timestamp of current timestamp
 let previousTime = performance.now();
@@ -22,4 +22,4 @@ export function gameLoop(currentTime: number) {
   moveShip(deltaTime);
   requestAnimationFrame(gameLoop);
 }
-requestAnimationFrame(gameLoop);
+

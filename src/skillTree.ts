@@ -17,10 +17,10 @@ interface UpgradeNode {
   effectFormula: (level: number) => number;
 }
 
-type UpgradeLibrary = Record<string, UpgradeNode>;
+type UpgradeLibrary = Record<UpgradeNodeId, UpgradeNode>;
 
 export const upgradeLibrary: UpgradeLibrary = {
-  heavyFuelInjection: {
+  N1: {
     id: "N1",
     name: "heavy-fuel-injection",
     maxLevel: 5,
@@ -42,7 +42,7 @@ export function buyNode(node: UpgradeNode): boolean {
 }
 
 function getNodeLevel(node: UpgradeNode): number {
-  return state.nodes[node.id];
+  return state.nodes[node.id].level
 }
 
 function getNodeCost(node: UpgradeNode): number {
@@ -52,8 +52,8 @@ function getNodeCost(node: UpgradeNode): number {
 
 export function applyNodeEffect(node: UpgradeNode): number {
   const nextLevel = getNodeLevel(node) + 1;
-  state.nodes[node.id] = nextLevel;
-  return nextLevel;
+state.nodes[node.id].level // TODo: FIX
+  return nextLevel
 }
 
 export function depleteCosts(node: UpgradeNode): number {

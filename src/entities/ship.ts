@@ -57,8 +57,3 @@ export function addPhysics() {
     ship.thrust.x = speed;
   }
 }
-
-export function applyMovement() {
-  ship.x += ship.thrust.x;
-  ship.y += ship.thrust.y;
-}

@@ -15,13 +15,13 @@ export const doc = (id: string) => document.getElementById(id) as HTMLElement;
 
 export function renderStats() {
   doc("lengthsCounter").textContent = `Scraps: ${state.currencies.scraps}`;
-  doc("scrapCounter").textContent = `Scraps: ${state.currentRun.lengths}`;
+  doc("scrapCounter").textContent = `Lengths: ${state.currentRun.lengths}`;
 }
 
 // main rendering function
 export const renderUpgrade = (upgrade: Upgrade) => {
-  createUpgrade(upgrade);
-  appendUpgradeText(upgrade, createUpgrade(upgrade));
+  const upgButton = createUpgrade(upgrade);
+  appendUpgradeText(upgrade, upgButton);
 };
 
 export function createUpgrade(upgrade: Upgrade) {
@@ -32,31 +32,29 @@ export function createUpgrade(upgrade: Upgrade) {
 }
 
 export function appendUpgradeText(upgrade: Upgrade, upgButton: HTMLElement) {
-  const matchingNode = `${upgrade.id}`;
-  const cost = upgrade.costFormula(state.nodes[matchingNode]);
-  const effect = upgrade.effectFormula(state.nodes[matchingNode]);
+  if (!upgrade || !upgButton) {
+    console.warn("No button or adom element for button, rendering,ts:38");
+    return; // Case if a node is missing or mistyped
+  }
+  const currentNode = state.nodes[upgrade.id];
+  if (!currentNode) {
+    console.error("Nagget party");
+
+    return;
+  }
+  const cost: number = upgrade.costFormula(currentNode.level + 1);
+  const effect = upgrade.effectFormula(currentNode.level + 1);
   upgButton.textContent = `Cost: ${cost} scraps.
   Effect: ${effect}`;
-  upgButton.appendChild(doc("upgrade-list"));
+  doc("upgradeList").appendChild(upgButton);
 }
 
 // Renders the player ship on the canvas.
-function drawShip(ctx: CanvasRenderingContext2D, ship: Ship): void {
+export function drawShip(ctx: CanvasRenderingContext2D, ship: Ship): void {
   ctx.beginPath();
   ctx.moveTo(ship.x, ship.y - 15);
   ctx.lineTo(ship.x - 10, ship.y + 10);
   ctx.lineTo(ship.x + 10, ship.y + 10);
   ctx.closePath();
   ctx.stroke();
-}
-
-//* === ABSOLUTE BOTTOM ===
-// runtime rendering
-const canvas = doc("gameCanvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d");
-if (ctx) {
-  drawShip(ctx, ship);
-  Object.values(upgradeLibrary).forEach(renderUpgrade);
-} else {
-  console.log("ctx not found:", ctx);
 }
