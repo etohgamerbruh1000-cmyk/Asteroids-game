@@ -1,5 +1,5 @@
 export interface GameState {
-  runtimeState: Record<string, any>;
+  runtimeState: Record<string, number>;
   currencies: {
     asteroidsDestroyed: number;
     scraps: number;

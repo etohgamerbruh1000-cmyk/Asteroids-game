@@ -9,10 +9,13 @@
     "watch": "tsc --watch"
   },
   "keywords": [],
-  "author": "jacob",
+  "author": "REDACTED",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "typescript": "^7.0.2"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1"
   }
 }

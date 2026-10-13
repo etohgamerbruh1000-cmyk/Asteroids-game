@@ -1,6 +1,9 @@
 // gameLoop.ts
+// handles gameLoop, deltaTime
 
-import { ship } from "./ship.js";
+import { drawAsteroid } from "../rendering.js";
+import { asteroids, tickAsteroid } from "./asteroid.js";
+import { addPhysics, moveShipPosition, ship } from "./ship.js";
 
 // high-precision timestamp of current timestamp
 let previousTime = performance.now();
@@ -11,15 +14,44 @@ export function calculateDeltaTime(currentTime: number) {
   return deltaTime;
 }
 
-export function moveShip(deltaTime: number) {
-  ship.x += ship.thrust.x * deltaTime; // adjusts accordingly to fps
-  ship.y += ship.thrust.y * deltaTime;
-}
-
 // main helper function
-export function gameLoop(currentTime: number) {
+
+// TODo: 9:54 PM: TURN GAMELOOP INTO AN ARROW FUNCTION WRAPPER!!!
+export function gameLoop(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  currentTime: number,
+): void {
   const deltaTime = calculateDeltaTime(currentTime);
-  moveShip(deltaTime);
+  // TODO: make currentTime have a purpose, with asteroids
+  // TODO: slowly rotating and moving via delytaTime
+  addPhysics();
+  moveShipPosition(deltaTime);
+  // gaurd clause
+  if (!ctx || !canvas) {
+    console.warn("No ctx");
+    return;
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // rendering
+
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  // render ship upon domCOntentLoaded
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - 15);
+  ctx.lineTo(centerX - 10, centerY + 10);
+  ctx.lineTo(centerX + 10, centerY + 10);
+
+  ctx.closePath();
+  ctx.stroke();
+
+  for (const ast of asteroids) {
+    tickAsteroid(deltaTime, ast);
+    drawAsteroid(canvas, ctx, ast, ship.x, ship.y);
+  }
+
   requestAnimationFrame(gameLoop);
 }
-

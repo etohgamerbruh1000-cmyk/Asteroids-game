@@ -1,0 +1,738 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/
+  entities/
+    antibiotic.ts
+    asteroid.ts
+    gameLoop.ts
+    ship.ts
+  engine.ts
+  main.ts
+  rendering.ts
+  skillTree.ts
+  state.ts
+.gitignore
+eslint.config.mjs
+index.html
+package.json
+README.md
+style.css
+TODO.MD
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="eslint.config.mjs">
+// @ts-check
+
+import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
+
+export default defineConfig(
+  {
+    // Ignore generated files and installed dependencies.
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    // Only lint JavaScript and TypeScript source files.
+    files: ["src/**/*.{js,ts}"],
+
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.strict,
+      tseslint.configs.stylistic,
+    ],
+
+    rules: {
+      // Catch unused variables, imports, and parameters.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          vars: "all",
+          args: "all",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+
+      // Treat explicit `any` as an error.
+      "@typescript-eslint/no-explicit-any": "error",
+
+      // Require explicit handling of potentially unsafe promises.
+      "@typescript-eslint/no-floating-promises": "off",
+    },
+  },
+);
+</file>
+
+<file path="src/entities/antibiotic.ts">
+// antibiotic.ts
+</file>
+
+<file path="src/engine.ts">
+// engine.ts
+</file>
+
+<file path=".gitignore">
+# Compiled JavaScript output (keeps your repo pure TypeScript)
+dist/
+build/
+out/
+*.js
+!src/**/*.ts
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+</file>
+
+<file path="README.md">
+## README.md
+
+Documentation for Asteroids ( ADD MORE LATER )
+
+### IMPORTANT
+this is a game made in vanilla TypeScript, with it being my first project to be written in Typescript!
+
+all of this is WIP, please try to treat my code as if it is going to change or get reworked.
+
+### 1. Controls
+
+W -> accelerate forward
+S -> accelerate backward / brake
+A -> strafe left
+D -> strafe right
+
+Q -> rotate left
+E -> rotate right
+
+Space -> shoot
+Shift -> special thrust/boost
+
+## 1. Planning
+The game “Asteroids” is a game made in TypeScript, with it intentionally being less code-heavy to free me from development hell. It is a 2D game that allows you to thrust your ship and delete asteroids while maintaining a score and trying to manage a skill tree. The key systems are:
+
+### Unorthodox movement
+You wrap around walls, just like in normal asteroids games, but you don;t have friction. Instead, the game is like a platformer, where it makes you move according to the key pressed. When you shoot a laser, the laser gets shot according to the ship's rotation.
+
+### Currency
+Upon hitting an asteroid and dying in the current run, you gain scraps depending on how far you traveled in 50 pixels. 50px = “length”, for example, 150px traveled is equivalent to 3 lengths. Scraps are going to be inside some conversion formula based on lengths. You can also gain scraps based on asteroids killed.
+
+You can invest in a skill tree of sorts to increase thrust, decrease asteroid spawn,... There are 10-20 planned nodes.
+
+#### Ship thrust
+Your ship can thrust, gaining speed upon activating it. This is one of the key factors that can improve your currency generation. It gets expanded upon in the skill tree, giving it buffs like a wind shield when activated, or lesser cooldowns,..
+
+You have a limited amount of thrust energy. Whenever you thrust, your energy goes down faster. If you are close to dying, you can just speed through by holding a key (current plan: shift but it is subject to change), when you release you slow down to your original speed. 
+
+Hold shift for a long time -> Go faster
+Release shift -> Go to your original speed
+Hold shift -> nothing, you wasted your energy.
+
+### Asteroid abilities+types
+Asteroids can sometimes mutate and try to harm your ship, for example it can give poison, debuff the ship, and even reduce max speed. You will need to purchase antibiotics to occasionally throw at the asteroids, and the asteroids will break down / lose their ability upon throw based on the antibiotics’ effect
+Antibiotics become more expensive based on power and type, micromanage them or else you will be in it for a long time
+
+Asteroids spawn with no mutation near 0-1,000 lengths
+shipDebuff, shipPoison mutations spawn near 1,001-5,000 lengths
+After 5,000 lengths, all mutations have an increasingly bigger chance to spawn based on length and all mutations can spawn.
+
+
+The endgame is reached upon 1,000 asteroids killed AND 10,000 lengths, after that you get to face a final boss before reaching the end screen.
+The game’s length will be around 30m-1+1/2h long
+Intended development time: 10h active, 3 weeks inactive
+
+The game uses <canvas> elements
+Upgrade UI is built using HTML, not drawn in the canvas
+
+## 2. Architectural decisions
+
+File structure is intended to be around 7-15 files, regarding my statement about making the game less heavy.
+
+My proposed file structure:
+├── index.html
+├── style.css
+└── src/
+    ├── main.ts         # Setup, animation loop, input listeners, and state initialization
+    ├── state.ts        # Game state, inventory, currency, and Skill Tree definitions
+    ├── engine.ts       # Physics (wrapping/movement) and Canvas rendering functions
+    └── entities/
+        ├── ship.ts       # Ship physics, movement, and shield logic
+        ├── asteroid.ts   # Asteroid movement, mutation types, and splitting logic
+        └── antibiotic.ts # Antibiotic weapon logic, rendering, and collision radius
+</file>
+
+<file path="TODO.MD">
+## TODO.MD
+
+[x] got ship to work :D:D::D:D:D:D::D:D:D:D::D:D
+[] get asteroids to render
+</file>
+
+<file path="src/entities/asteroid.ts">
+export interface Asteroid {
+  worldX: number;
+  worldY: number;
+  vx: number; // Its own drift velocity X
+  vy: number; // Its own drift velocity Y
+  radius: number;
+}
+// 1. Maintain a global or module-scoped state array
+export const asteroids: Asteroid[] = [];
+
+// helper API for a random range
+const randomRange = (min: number, max: number): number =>
+  Math.random() * (max - min) + min;
+
+export function createAsteroid(input: Partial<Asteroid> = {}): Asteroid {
+  const defaults = randomizeAsteroid();
+
+  const asteroid: Asteroid = {
+    worldX: input.worldX ?? defaults.worldX,
+    worldY: input.worldY ?? defaults.worldY,
+    vx: input.vx ?? defaults.vx,
+    vy: input.vy ?? defaults.vy,
+    radius: input.radius ?? defaults.radius,
+  };
+
+  asteroids.push(asteroid);
+  return asteroid;
+}
+// put this into main.ts
+export function randomizeAsteroid() {
+  return {
+    worldX: randomRange(0, 10000),
+    worldY: randomRange(0, 10000),
+    vx: randomRange(0, 30),
+    vy: randomRange(0, 30),
+    radius: randomRange(30, 35),
+  };
+}
+
+export function tickAsteroids(deltaTime: number) {
+  for (const ast of asteroids) {
+    ast.worldX += ast.vx * deltaTime;
+    ast.worldY += ast.vy * deltaTime;
+  }
+  return asteroids;
+}
+</file>
+
+<file path="src/entities/gameLoop.ts">
+// gameLoop.ts
+// handles gameLoop, deltaTime
+
+import { drawAsteroid } from "../rendering.js";
+import { asteroids } from "./asteroid.js";
+import { addPhysics, ship } from "./ship.js";
+
+// high-precision timestamp of current timestamp
+let previousTime = performance.now();
+
+export function calculateDeltaTime(currentTime: number) {
+  const deltaTime = (currentTime - previousTime) / 1000;
+  previousTime = currentTime;
+  return deltaTime;
+}
+
+const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+const ctx = canvas.getContext("2d");
+// main helper function
+export function gameLoop(currentTime: number) {
+  // TODO: make currentTime have a purpose, with asteroids
+  // TODO: slowly rotating and moving via delytaTime
+  addPhysics();
+
+  // gaurd clause
+  if (!ctx || !canvas) {
+    console.warn("No ctx");
+    return;
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // rendering
+
+  if (!canvas) return;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  // render ship upon domCOntentLoaded
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - 15);
+  ctx.lineTo(centerX - 10, centerY + 10);
+  ctx.lineTo(centerX + 10, centerY + 10);
+
+  ctx.closePath();
+  ctx.stroke();
+
+  for (const ast of asteroids) {
+    drawAsteroid(canvas, ctx, ast, ship.x, ship.y);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+</file>
+
+<file path="src/entities/ship.ts">
+// ship.ts
+
+export interface Ship {
+  x: number;
+  y: number;
+  radius: number;
+  angle: number;
+  rotationSpeed: number;
+  thrust: {
+    x: number;
+    y: number;
+  };
+  isThrusting: boolean;
+}
+export const ship: Ship = {
+  x: 300,
+  y: 400,
+  thrust: { x: 0, y: 0 },
+  radius: 15, // radians
+  angle: 0,
+  rotationSpeed: 0,
+  isThrusting: false,
+};
+
+// TODO: Add Set
+
+const pressedKeys = new Set<string>();
+
+window.addEventListener("keydown", (event) => {
+  // absolute position, key location doesn't matter
+  pressedKeys.add(event.code);
+});
+
+window.addEventListener("keyup", (event) => {
+  pressedKeys.delete(event.code);
+});
+
+// runs every game tick
+export function addPhysics() {
+  const speed = 200;
+  ship.thrust.x = 0;
+  ship.thrust.y = 0;
+
+  if (pressedKeys.has("KeyW")) {
+    ship.thrust.y = -speed;
+  }
+  if (pressedKeys.has("KeyS")) {
+    ship.thrust.y = speed;
+  }
+  if (pressedKeys.has("KeyA")) {
+    ship.thrust.x = -speed;
+  }
+  if (pressedKeys.has("KeyD")) {
+    ship.thrust.x = speed;
+  }
+}
+
+// moves coordinates, not
+export function moveShipPosition(deltaTime: number) {
+  ship.x += ship.thrust.x * deltaTime; // adjusts accordingly to fps
+  ship.y += ship.thrust.y * deltaTime;
+}
+
+export function fireLaser() {
+  // TODO: Add this
+}
+</file>
+
+<file path="src/main.ts">
+// main.ts
+import { asteroids, createAsteroid } from "./entities/asteroid.js";
+import { gameLoop } from "./entities/gameLoop.js";
+import {} from "./entities/ship.js";
+import { renderUpgrade, render, drawAsteroid } from "./rendering.js";
+import { upgradeLibrary } from "./skillTree.js";
+
+// safeguard for html content loaded
+window.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+  const ctx = canvas?.getContext("2d");
+
+  if (ctx && canvas) {
+ 
+    // Generate buttons only once when page loads!
+    Object.values(upgradeLibrary).forEach(renderUpgrade);
+    for (let i = 0; i < 100; i++) {
+      createAsteroid();
+    }
+
+    render();
+
+    // Start drawing the game loop
+    requestAnimationFrame(gameLoop);
+  } else {
+    console.warn("Could not find canvas or 2d context");
+  }
+});
+</file>
+
+<file path="src/rendering.ts">
+// rendering.ts
+// renders data shown. doesn't affect gameplay, only visuals!
+
+import { Asteroid } from "./entities/asteroid.js";
+import { buyNode, upgradeLibrary } from "./skillTree.js";
+import { state } from "./state.js";
+export type Upgrade = (typeof upgradeLibrary)[keyof typeof upgradeLibrary];
+
+// main helper function
+export function render(): void {
+  renderStats();
+}
+
+// Compact arrow function that returns the element
+export const doc = (id: string) => document.getElementById(id) as HTMLElement;
+
+export function renderStats(): void {
+  doc("lengthsCounter").textContent = `Scraps: ${state.currencies.scraps}`;
+  doc("scrapCounter").textContent = `Lengths: ${state.currentRun.lengths}`;
+}
+
+// main rendering function
+export const renderUpgrade = (upgrade: Upgrade): void => {
+  const upgButton = createUpgrade(upgrade);
+  appendUpgradeText(upgrade, upgButton);
+
+  upgButton.addEventListener("click", function () {
+    const eligible = buyNode(upgrade);
+    if (eligible) {
+      updateButtonText(upgrade, upgButton);
+    }
+  });
+};
+
+// TODO: REthink this bruh
+// Extracted text updates so they can run repeatedly per level up
+export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
+  const currentNode = state.nodes[upgrade.id];
+  if (!currentNode) return;
+
+  const currentLevel = currentNode.level;
+  const isMaxed = currentLevel >= upgrade.maxLevel;
+
+  const cost = isMaxed
+    ? "MAXED"
+    : `${upgrade.costFormula(currentLevel)} scraps`;
+  const effect = upgrade.effectFormula(currentLevel);
+
+  upgButton.textContent = `${upgrade.name} (Lv ${currentLevel}/${upgrade.maxLevel}) | Cost: ${cost} | Effect: +${effect}`;
+}
+
+export function createUpgrade(upgrade: Upgrade) {
+  const upgButton = document.createElement("button");
+  upgButton.id = `button-${upgrade.id}`;
+
+  return upgButton;
+}
+
+export function appendUpgradeText(upgrade: Upgrade, upgButton: HTMLElement) {
+  if (!upgrade || !upgButton) {
+    console.warn("No button or adom element for button, rendering,ts:38");
+    return; // Case if a node is missing or mistyped
+  }
+  const currentNode = state.nodes[upgrade.id];
+  if (!currentNode) {
+    console.error("No node available.");
+
+    return;
+  }
+  const cost: number = upgrade.costFormula(currentNode.level + 1);
+  const effect = upgrade.effectFormula(currentNode.level + 1);
+  upgButton.textContent = `Cost: ${cost} scraps.
+  Effect: ${effect}`;
+  doc("upgradeList").appendChild(upgButton);
+}
+
+// ==================
+//* 2. Game rendering
+// ==================
+
+// main drawing function with relatuve scrolling equipped into it!
+export function drawAsteroid(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  asteroid: Asteroid,
+  shipX: number,
+  shipY: number,
+) {
+  const padding: number = asteroid.radius;
+
+  const screenX: number = asteroid.worldX - shipX + canvas.width / 2;
+  const screenY: number = asteroid.worldY - shipY + canvas.height / 2;
+  // relativ scrolling system
+  if (
+    screenX < -padding ||
+    screenX > canvas.width + padding ||
+    screenY < -padding ||
+    screenY > canvas.height + padding
+  ) {
+    // hides the asteroid and skips rendering
+    return;
+  } else {
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, asteroid.radius, 0, Math.PI * 2);
+    // optional aestethics
+    ctx.fillStyle = "white";
+    ctx.fill();
+  }
+}
+</file>
+
+<file path="src/skillTree.ts">
+// skillTree.ts
+
+// handles static definitions, purchasing
+// TODO: FIXME: rework upgrades to be better and more diverse
+// TODO: fix me plssssss
+
+import { state, type GameState } from "./state.js";
+
+type UpgradeNodeId = keyof GameState["nodes"];
+
+interface UpgradeNode {
+  id: UpgradeNodeId;
+  name: string;
+  maxLevel: number;
+  baseCost: number;
+  costFormula: (level: number) => number;
+  effectFormula: (level: number) => number;
+}
+
+type UpgradeLibrary = Record<UpgradeNodeId, UpgradeNode>;
+
+export const upgradeLibrary: UpgradeLibrary = {
+  N1: {
+    id: "N1",
+    name: "heavy-fuel-injection",
+    maxLevel: 5,
+    baseCost: 100,
+    costFormula: (level) => 100 + level * 30,
+    effectFormula: (level) => level * 1.5,
+  },
+};
+
+//* main function to buy a node.
+export function buyNode(node: UpgradeNode): boolean {
+  // 1. Checks for cost, maxed, and returns true if none match
+  if (!checkUpgradeEligibility(node)) {
+    return false;
+  }
+
+  // 2. appplies node effect, depletes cost
+  applyNodeEffect(node);
+  depleteCosts(node);
+  return true;
+}
+
+export function checkUpgradeEligibility(node: UpgradeNode): boolean {
+  // 1. Guard clause
+  if (!node) {
+    return false;
+  }
+
+  const currentLevel = getNodeLevel(node);
+  if (currentLevel >= node.maxLevel) {
+    return false;
+  }
+
+  const cost = getNodeCost(node);
+  return state.currencies.scraps >= cost;
+}
+
+export function applyNodeEffect(node: UpgradeNode): number {
+  const nextLevel = getNodeLevel(node) + 1;
+  state.nodes[node.id].level += 1;
+  return nextLevel;
+}
+
+export function depleteCosts(node: UpgradeNode): number {
+  const cost = getNodeCost(node);
+  state.currencies.scraps = Math.max(0, state.currencies.scraps - cost);
+  return state.currencies.scraps;
+}
+
+function getNodeLevel(node: UpgradeNode): number {
+  return state.nodes[node.id].level;
+}
+
+function getNodeCost(node: UpgradeNode): number {
+  const level = getNodeLevel(node);
+  return Math.floor(node.baseCost * node.costFormula(level));
+}
+</file>
+
+<file path="src/state.ts">
+export interface GameState {
+  runtimeState: Record<string, number>;
+  currencies: {
+    asteroidsDestroyed: number;
+    scraps: number;
+    thrustEnergy: number;
+  };
+  currentRun: {
+    lengths: number;
+  };
+  nodes: Record<`N${number}`, { level: number }>;
+}
+
+export const state: GameState = {
+  runtimeState: {},
+  currencies: {
+    asteroidsDestroyed: 0,
+    scraps: 0,
+    thrustEnergy: 100,
+  },
+  currentRun: {
+    lengths: 0,
+  },
+  // Generates N1 through N10 automatically
+  nodes: Object.fromEntries(
+    Array.from({ length: 10 }, (_, i) => [`N${i + 1}`, { level: 0 }]),
+  ) as GameState["nodes"],
+};
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asteroids</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="dist/main.js" defer></script>
+  </head>
+  <body>
+    <h2>Asteroids</h2>
+    <p>A web game in TS. kill 10,000 asteroids to reach the boss!</p>
+    <p id="lengthsCounter"></p>
+    <p id="scrapCounter"></p>
+
+    <div id="upgradeList">
+      <!-- dynamically rendered-->
+    </div>
+
+    <!--Absolute bottom - Don't put anything below here-->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+  </body>
+</html>
+</file>
+
+<file path="package.json">
+{
+  "name": "asteroids",
+  "version": "1.0.0",
+  "description": "Asteroids is a game that is made in vanilla typescript. Please note that all of this is WIP, please try to treat my code as if it is going to change or get reworked. 1. Controls W accelerate forward S accelerate backward / brake A strafe left D strafe right Q rotate left E rotate right Space shoot Shift special thrust/boost",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "REDACTED",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}
+</file>
+
+<file path="style.css">
+canvas {
+  border: 2px solid black;
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"]
+}
+</file>
+
+</files>

@@ -1,10 +1,10 @@
 // skillTree.ts
 
-import { state, type GameState } from "./state.js";
-
 // handles static definitions, purchasing
-// FIXME: rework upgrades to be better and more diverse
+// TODO: FIXME: rework upgrades to be better and more diverse
 // TODO: fix me plssssss
+
+import { state, type GameState } from "./state.js";
 
 type UpgradeNodeId = keyof GameState["nodes"];
 
@@ -30,30 +30,38 @@ export const upgradeLibrary: UpgradeLibrary = {
   },
 };
 
-// main function
+//* main function to buy a node.
 export function buyNode(node: UpgradeNode): boolean {
+  // 1. Checks for cost, maxed, and returns true if none match
   if (!checkUpgradeEligibility(node)) {
     return false;
   }
 
+  // 2. appplies node effect, depletes cost
   applyNodeEffect(node);
   depleteCosts(node);
   return true;
 }
 
-function getNodeLevel(node: UpgradeNode): number {
-  return state.nodes[node.id].level
-}
+export function checkUpgradeEligibility(node: UpgradeNode): boolean {
+  // 1. Guard clause
+  if (!node) {
+    return false;
+  }
 
-function getNodeCost(node: UpgradeNode): number {
-  const level = getNodeLevel(node);
-  return Math.floor(node.baseCost * node.costFormula(level));
+  const currentLevel = getNodeLevel(node);
+  if (currentLevel >= node.maxLevel) {
+    return false;
+  }
+
+  const cost = getNodeCost(node);
+  return state.currencies.scraps >= cost;
 }
 
 export function applyNodeEffect(node: UpgradeNode): number {
   const nextLevel = getNodeLevel(node) + 1;
-state.nodes[node.id].level // TODo: FIX
-  return nextLevel
+  state.nodes[node.id].level += 1;
+  return nextLevel;
 }
 
 export function depleteCosts(node: UpgradeNode): number {
@@ -62,17 +70,11 @@ export function depleteCosts(node: UpgradeNode): number {
   return state.currencies.scraps;
 }
 
-export function checkUpgradeEligibility(node: UpgradeNode): boolean {
-  if (!node) {
-    return false;
-  }
+function getNodeLevel(node: UpgradeNode): number {
+  return state.nodes[node.id].level;
+}
 
-  const currentLevel = getNodeLevel(node);
-
-  if (currentLevel >= node.maxLevel) {
-    return false;
-  }
-
-  const cost = getNodeCost(node);
-  return state.currencies.scraps >= cost;
+function getNodeCost(node: UpgradeNode): number {
+  const level = getNodeLevel(node);
+  return Math.floor(node.baseCost * node.costFormula(level));
 }

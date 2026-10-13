@@ -1,7 +1,5 @@
 // ship.ts
 
-const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-
 export interface Ship {
   x: number;
   y: number;
@@ -15,8 +13,8 @@ export interface Ship {
   isThrusting: boolean;
 }
 export const ship: Ship = {
-  x: canvas.width / 2,
-  y: canvas.height / 2,
+  x: 300,
+  y: 400,
   thrust: { x: 0, y: 0 },
   radius: 15, // radians
   angle: 0,
@@ -29,31 +27,40 @@ export const ship: Ship = {
 const pressedKeys = new Set<string>();
 
 window.addEventListener("keydown", (event) => {
-  pressedKeys.add(event.key);
+  // absolute position, key location doesn't matter
+  pressedKeys.add(event.code);
 });
 
 window.addEventListener("keyup", (event) => {
-  pressedKeys.delete(event.key);
+  pressedKeys.delete(event.code);
 });
 
-// runs every tick
+// runs every game tick
 export function addPhysics() {
-  const speed = 5;
+  const speed = 200;
   ship.thrust.x = 0;
   ship.thrust.y = 0;
-  if (pressedKeys.has("w")) {
+
+  if (pressedKeys.has("KeyW")) {
     ship.thrust.y = -speed;
   }
-
-  if (pressedKeys.has("a")) {
+  if (pressedKeys.has("KeyS")) {
     ship.thrust.y = speed;
   }
-
-  if (pressedKeys.has("s")) {
+  if (pressedKeys.has("KeyA")) {
+    ship.thrust.x = -speed;
+  }
+  if (pressedKeys.has("KeyD")) {
     ship.thrust.x = speed;
   }
+}
 
-  if (pressedKeys.has("d")) {
-    ship.thrust.x = speed;
-  }
+// moves coordinates, not
+export function moveShipPosition(deltaTime: number) {
+  ship.x += ship.thrust.x * deltaTime; // adjusts accordingly to fps
+  ship.y += ship.thrust.y * deltaTime;
+}
+
+export function fireLaser() {
+  // TODO: Add this
 }

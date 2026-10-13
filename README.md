@@ -23,6 +23,9 @@ Shift -> special thrust/boost
 ## 1. Planning
 The game “Asteroids” is a game made in TypeScript, with it intentionally being less code-heavy to free me from development hell. It is a 2D game that allows you to thrust your ship and delete asteroids while maintaining a score and trying to manage a skill tree. The key systems are:
 
+### Unorthodox movement
+You wrap around walls, just like in normal asteroids games, but you don;t have friction. Instead, the game is like a platformer, where it makes you move according to the key pressed. When you shoot a laser, the laser gets shot according to the ship's rotation.
+
 ### Currency
 Upon hitting an asteroid and dying in the current run, you gain scraps depending on how far you traveled in 50 pixels. 50px = “length”, for example, 150px traveled is equivalent to 3 lengths. Scraps are going to be inside some conversion formula based on lengths. You can also gain scraps based on asteroids killed.
 
