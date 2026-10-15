@@ -29,11 +29,11 @@ export function createAsteroid(input: Partial<Asteroid> = {}): Asteroid {
 // put this into main.ts
 export function randomizeAsteroid() {
   return {
-    worldX: randomRange(0, 10000),
-    worldY: randomRange(0, 10000),
-    vx: randomRange(0, 30),
-    vy: randomRange(0, 30),
-    radius: randomRange(30, 35),
+    worldX: randomRange(-600, 1400),
+    worldY: randomRange(-600, 1400),
+    vx: randomRange(-50, 50), // Allows multi-directional drifting values
+    vy: randomRange(-50, 50),
+    radius: randomRange(20, 25),
   };
 }
 
@@ -44,3 +44,4 @@ export function tickAsteroid(deltaTime: number, asteroid: Asteroid) {
 
   return asteroid;
 }
+

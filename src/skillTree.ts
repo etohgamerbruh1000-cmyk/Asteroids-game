@@ -2,7 +2,6 @@
 
 // handles static definitions, purchasing
 // TODO: FIXME: rework upgrades to be better and more diverse
-// TODO: fix me plssssss
 
 import { state, type GameState } from "./state.js";
 
@@ -25,7 +24,7 @@ export const upgradeLibrary: UpgradeLibrary = {
     name: "heavy-fuel-injection",
     maxLevel: 5,
     baseCost: 100,
-    costFormula: (level) => 100 + level * 30,
+    costFormula: (level) => 1 + level * 0.3, // mult
     effectFormula: (level) => level * 1.5,
   },
 };

@@ -64,6 +64,44 @@ tsconfig.json
 <files>
 This section contains the contents of the repository's files.
 
+<file path="src/entities/antibiotic.ts">
+// antibiotic.ts
+</file>
+
+<file path="src/engine.ts">
+// engine.ts
+</file>
+
+<file path=".gitignore">
+# Compiled JavaScript output (keeps your repo pure TypeScript)
+dist/
+build/
+out/
+*.js
+!src/**/*.ts
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+</file>
+
 <file path="eslint.config.mjs">
 // @ts-check
 
@@ -109,42 +147,30 @@ export default defineConfig(
 );
 </file>
 
-<file path="src/entities/antibiotic.ts">
-// antibiotic.ts
-</file>
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asteroids</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="dist/main.js" defer></script>
+  </head>
+  <body>
+    <h2>Asteroids</h2>
+    <p>A web game in TS. kill 10,000 asteroids to reach the boss!</p>
+    <p id="lengthsCounter"></p>
+    <p id="scrapCounter"></p>
 
-<file path="src/engine.ts">
-// engine.ts
-</file>
+    <div id="upgradeList">
+      <!-- dynamically rendered-->
+    </div>
 
-<file path=".gitignore">
-# Compiled JavaScript output (keeps your repo pure TypeScript)
-dist/
-build/
-out/
-*.js
-!src/**/*.ts
-
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# IDE / Editor folders
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Log files
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+    <!--Absolute bottom - Don't put anything below here-->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+  </body>
+</html>
 </file>
 
 <file path="README.md">
@@ -223,11 +249,46 @@ My proposed file structure:
         └── antibiotic.ts # Antibiotic weapon logic, rendering, and collision radius
 </file>
 
+<file path="style.css">
+/* style.css */
+body {
+  background-color: #111;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+canvas {
+  border: 2px solid #444;
+  background-color: #050508; /* Dark Space Background */
+  display: block;
+  margin-top: 10px;
+}
+</file>
+
 <file path="TODO.MD">
 ## TODO.MD
 
 [x] got ship to work :D:D::D:D:D:D::D:D:D:D::D:D
 [] get asteroids to render
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"]
+}
 </file>
 
 <file path="src/entities/asteroid.ts">
@@ -262,20 +323,20 @@ export function createAsteroid(input: Partial<Asteroid> = {}): Asteroid {
 // put this into main.ts
 export function randomizeAsteroid() {
   return {
-    worldX: randomRange(0, 10000),
-    worldY: randomRange(0, 10000),
-    vx: randomRange(0, 30),
-    vy: randomRange(0, 30),
-    radius: randomRange(30, 35),
+    worldX: randomRange(-600, 1400),
+    worldY: randomRange(-600, 1400),
+    vx: randomRange(-50, 50), // Allows multi-directional drifting values
+    vy: randomRange(-50, 50),
+    radius: randomRange(20, 25),
   };
 }
 
-export function tickAsteroids(deltaTime: number) {
-  for (const ast of asteroids) {
-    ast.worldX += ast.vx * deltaTime;
-    ast.worldY += ast.vy * deltaTime;
-  }
-  return asteroids;
+// updates worldPos for asteroid, based on deltaTime
+export function tickAsteroid(deltaTime: number, asteroid: Asteroid) {
+  asteroid.worldX += asteroid.vx * deltaTime;
+  asteroid.worldY += asteroid.vy * deltaTime;
+
+  return asteroid;
 }
 </file>
 
@@ -283,9 +344,15 @@ export function tickAsteroids(deltaTime: number) {
 // gameLoop.ts
 // handles gameLoop, deltaTime
 
-import { drawAsteroid } from "../rendering.js";
-import { asteroids } from "./asteroid.js";
-import { addPhysics, ship } from "./ship.js";
+import { cleanLaserArray, drawAsteroid, drawLaser } from "../rendering.js";
+import { asteroids, tickAsteroid } from "./asteroid.js";
+import {
+  activeLasers,
+  checkKeystroke,
+  moveShipPosition,
+  ship,
+  tickLaser,
+} from "./ship.js";
 
 // high-precision timestamp of current timestamp
 let previousTime = performance.now();
@@ -296,14 +363,16 @@ export function calculateDeltaTime(currentTime: number) {
   return deltaTime;
 }
 
-const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d");
 // main helper function
-export function gameLoop(currentTime: number) {
-  // TODO: make currentTime have a purpose, with asteroids
-  // TODO: slowly rotating and moving via delytaTime
-  addPhysics();
 
+export const gameLoop = (
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  currentTime: number,
+): void => {
+  const deltaTime = calculateDeltaTime(currentTime);
+  checkKeystroke();
+  moveShipPosition(deltaTime);
   // gaurd clause
   if (!ctx || !canvas) {
     console.warn("No ctx");
@@ -311,27 +380,40 @@ export function gameLoop(currentTime: number) {
   }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // rendering
 
-  if (!canvas) return;
+  // Rendering the ship on the canvas
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
 
-  // render ship upon domCOntentLoaded
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY - 15);
-  ctx.lineTo(centerX - 10, centerY + 10);
-  ctx.lineTo(centerX + 10, centerY + 10);
+  ctx.save(); // 1. Save the clean, normal canvas state
+  ctx.translate(centerX, centerY);
+  ctx.rotate(ship.angle);
 
+  ctx.beginPath();
+
+  ctx.moveTo(15, 0);
+  ctx.lineTo(-10, -10);
+  ctx.lineTo(-10, 10);
   ctx.closePath();
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
   ctx.stroke();
+  ctx.restore();
 
   for (const ast of asteroids) {
+    tickAsteroid(deltaTime, ast);
     drawAsteroid(canvas, ctx, ast, ship.x, ship.y);
   }
 
-  requestAnimationFrame(gameLoop);
-}
+  for (const laser of activeLasers) {
+    tickLaser(deltaTime, laser);
+    cleanLaserArray(canvas, ship.x, ship.y);
+    drawLaser(canvas, ctx, laser, ship.x, ship.y);
+  }
+
+  requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
+};
 </file>
 
 <file path="src/entities/ship.ts">
@@ -348,18 +430,20 @@ export interface Ship {
     y: number;
   };
   isThrusting: boolean;
+  laserCooldown: number;
+  lastFireTime: number;
 }
 export const ship: Ship = {
   x: 300,
   y: 400,
   thrust: { x: 0, y: 0 },
-  radius: 15, // radians
-  angle: 0,
-  rotationSpeed: 0,
+  radius: 15, // size in px
+  angle: 0, // radians
+  rotationSpeed: 0.01, // rad/tick
   isThrusting: false,
+  laserCooldown: 500, // milliseconds
+  lastFireTime: 0,
 };
-
-// TODO: Add Set
 
 const pressedKeys = new Set<string>();
 
@@ -371,13 +455,15 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("keyup", (event) => {
   pressedKeys.delete(event.code);
 });
-
-// runs every game tick
-export function addPhysics() {
+// runs every game tick!!!
+export function checkKeystroke() {
   const speed = 200;
+  const rotationSpeed = 2;
   ship.thrust.x = 0;
   ship.thrust.y = 0;
+  ship.rotationSpeed = 0;
 
+  // TODO: Add actual acceleration instead of static force
   if (pressedKeys.has("KeyW")) {
     ship.thrust.y = -speed;
   }
@@ -390,25 +476,68 @@ export function addPhysics() {
   if (pressedKeys.has("KeyD")) {
     ship.thrust.x = speed;
   }
+  // rotationq
+  if (pressedKeys.has("KeyQ")) {
+    ship.rotationSpeed = rotationSpeed;
+  }
+  if (pressedKeys.has("KeyE")) {
+    ship.rotationSpeed = -rotationSpeed;
+  }
+  if (pressedKeys.has("KeySpace")) {
+    const now = performance.now();
+    if (now - ship.lastFireTime - ship.laserCooldown) {
+      fireLaser(200);
+      ship.lastFireTime = now;
+    }
+  }
 }
 
-// moves coordinates, not
+// moves coordinates, not actual x+y position
 export function moveShipPosition(deltaTime: number) {
   ship.x += ship.thrust.x * deltaTime; // adjusts accordingly to fps
   ship.y += ship.thrust.y * deltaTime;
+
+  ship.angle += ship.rotationSpeed * deltaTime;
 }
 
-export function fireLaser() {
-  // TODO: Add this
+export const activeLasers: Laser[] = [];
+export interface Laser {
+  worldX: number; // Tracks where it is in the world
+  worldY: number;
+  vx: number;
+  vy: number;
+  damage: number;
+}
+
+// TODO: Fix args being > than intended since i added new args for less declarations
+export function fireLaser(laserSpeed: number) {
+  // Calculate velocity vectors based on the ship's current angle
+  const vx = Math.cos(ship.angle) * laserSpeed;
+  const vy = Math.sin(ship.angle) * laserSpeed;
+  const newLaser: Laser = {
+    worldX: ship.x,
+    worldY: ship.y,
+    vx: vx,
+    vy: vy,
+    damage: 1,
+  };
+  activeLasers.push(newLaser);
+}
+
+export function tickLaser(deltaTime: number, laser: Laser) {
+  laser.worldX += laser.vx * deltaTime;
+  laser.worldY += laser.vy * deltaTime;
+
+  return laser;
 }
 </file>
 
 <file path="src/main.ts">
 // main.ts
-import { asteroids, createAsteroid } from "./entities/asteroid.js";
+import { createAsteroid } from "./entities/asteroid.js";
 import { gameLoop } from "./entities/gameLoop.js";
 import {} from "./entities/ship.js";
-import { renderUpgrade, render, drawAsteroid } from "./rendering.js";
+import { renderUpgrade, render } from "./rendering.js";
 import { upgradeLibrary } from "./skillTree.js";
 
 // safeguard for html content loaded
@@ -417,19 +546,18 @@ window.addEventListener("DOMContentLoaded", () => {
   const ctx = canvas?.getContext("2d");
 
   if (ctx && canvas) {
- 
-    // Generate buttons only once when page loads!
+    // 1. Generate buttons
     Object.values(upgradeLibrary).forEach(renderUpgrade);
+    // 2. Create 100 asteroids on canvas, using default (randomized properties)
     for (let i = 0; i < 100; i++) {
       createAsteroid();
     }
-
     render();
 
     // Start drawing the game loop
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
   } else {
-    console.warn("Could not find canvas or 2d context");
+    console.warn("Could not find canvas and 2d context");
   }
 });
 </file>
@@ -438,6 +566,7 @@ window.addEventListener("DOMContentLoaded", () => {
 // rendering.ts
 // renders data shown. doesn't affect gameplay, only visuals!
 
+import { activeLasers, Laser } from "./entities/ship.js";
 import { Asteroid } from "./entities/asteroid.js";
 import { buyNode, upgradeLibrary } from "./skillTree.js";
 import { state } from "./state.js";
@@ -469,7 +598,7 @@ export const renderUpgrade = (upgrade: Upgrade): void => {
   });
 };
 
-// TODO: REthink this bruh
+// TODO: Think about this archu=itecture, pasted by ai since i was too lazy
 // Extracted text updates so they can run repeatedly per level up
 export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
   const currentNode = state.nodes[upgrade.id];
@@ -480,7 +609,7 @@ export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
 
   const cost = isMaxed
     ? "MAXED"
-    : `${upgrade.costFormula(currentLevel)} scraps`;
+    : `${upgrade.costFormula(currentLevel + 1)} scraps`;
   const effect = upgrade.effectFormula(currentLevel);
 
   upgButton.textContent = `${upgrade.name} (Lv ${currentLevel}/${upgrade.maxLevel}) | Cost: ${cost} | Effect: +${effect}`;
@@ -494,9 +623,10 @@ export function createUpgrade(upgrade: Upgrade) {
 }
 
 export function appendUpgradeText(upgrade: Upgrade, upgButton: HTMLElement) {
+  // guard clause if a node is missing or mistyped
   if (!upgrade || !upgButton) {
-    console.warn("No button or adom element for button, rendering,ts:38");
-    return; // Case if a node is missing or mistyped
+    console.warn("No button or DOM element for button");
+    return;
   }
   const currentNode = state.nodes[upgrade.id];
   if (!currentNode) {
@@ -541,7 +671,63 @@ export function drawAsteroid(
     ctx.arc(screenX, screenY, asteroid.radius, 0, Math.PI * 2);
     // optional aestethics
     ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
     ctx.fill();
+  }
+}
+
+export function drawLaser(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  laser: Laser,
+  shipX: number,
+  shipY: number,
+) {
+  // Convert absolute world positions into screen positions matching your ship viewport tracking
+  const screenX = laser.worldX - shipX + canvas.width / 2;
+  const screenY = laser.worldY - shipY + canvas.height / 2;
+
+  // Simple offscreen check snippet
+  if (
+    screenX < 0 ||
+    screenX > canvas.width ||
+    screenY < 0 ||
+    screenY > canvas.height
+  ) {
+    return;
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  // Draw a small bright neon red projectile line
+  ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff3333";
+  ctx.shadowColor = "#ff0000"; // Optional space arcade glow effect
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
+}
+
+// plural
+export function cleanLaserArray(
+  canvas: HTMLCanvasElement,
+  shipX: number,
+  shipY: number,
+) {
+  for (let i = activeLasers.length - 1; i >= 0; i--) {
+    const laser = activeLasers[i];
+
+    // Calculate screen position relative to the camera/ship layout
+    const screenX = laser.worldX - shipX + canvas.width / 2;
+    const screenY = laser.worldY - shipY + canvas.height / 2;
+    if (
+      screenX < 0 ||
+      screenX > canvas.width ||
+      screenY < 0 ||
+      screenY > canvas.height
+    ) {
+      activeLasers.splice(i, 1);
+    }
   }
 }
 </file>
@@ -551,7 +737,6 @@ export function drawAsteroid(
 
 // handles static definitions, purchasing
 // TODO: FIXME: rework upgrades to be better and more diverse
-// TODO: fix me plssssss
 
 import { state, type GameState } from "./state.js";
 
@@ -574,7 +759,7 @@ export const upgradeLibrary: UpgradeLibrary = {
     name: "heavy-fuel-injection",
     maxLevel: 5,
     baseCost: 100,
-    costFormula: (level) => 100 + level * 30,
+    costFormula: (level) => level * 30 + 100,
     effectFormula: (level) => level * 1.5,
   },
 };
@@ -660,78 +845,22 @@ export const state: GameState = {
 };
 </file>
 
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asteroids</title>
-    <link rel="stylesheet" href="style.css" />
-    <script type="module" src="dist/main.js" defer></script>
-  </head>
-  <body>
-    <h2>Asteroids</h2>
-    <p>A web game in TS. kill 10,000 asteroids to reach the boss!</p>
-    <p id="lengthsCounter"></p>
-    <p id="scrapCounter"></p>
-
-    <div id="upgradeList">
-      <!-- dynamically rendered-->
-    </div>
-
-    <!--Absolute bottom - Don't put anything below here-->
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-  </body>
-</html>
-</file>
-
 <file path="package.json">
 {
   "name": "asteroids",
   "version": "1.0.0",
-  "description": "Asteroids is a game that is made in vanilla typescript. Please note that all of this is WIP, please try to treat my code as if it is going to change or get reworked. 1. Controls W accelerate forward S accelerate backward / brake A strafe left D strafe right Q rotate left E rotate right Space shoot Shift special thrust/boost",
-  "main": "main.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "watch": "tsc --watch"
   },
-  "keywords": [],
-  "author": "REDACTED",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.12.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1"
   }
-}
-</file>
-
-<file path="style.css">
-canvas {
-  border: 2px solid black;
-}
-</file>
-
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "sourceMap": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*"]
 }
 </file>
 

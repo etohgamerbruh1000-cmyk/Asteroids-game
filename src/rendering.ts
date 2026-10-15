@@ -1,6 +1,7 @@
 // rendering.ts
 // renders data shown. doesn't affect gameplay, only visuals!
 
+import { Laser } from "./entities/ship.js";
 import { Asteroid } from "./entities/asteroid.js";
 import { buyNode, upgradeLibrary } from "./skillTree.js";
 import { state } from "./state.js";
@@ -32,7 +33,7 @@ export const renderUpgrade = (upgrade: Upgrade): void => {
   });
 };
 
-// TODO: REthink this bruh
+// TODO: Think about this archu=itecture, pasted by ai since i was too lazy
 // Extracted text updates so they can run repeatedly per level up
 export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
   const currentNode = state.nodes[upgrade.id];
@@ -43,7 +44,7 @@ export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
 
   const cost = isMaxed
     ? "MAXED"
-    : `${upgrade.costFormula(currentLevel)} scraps`;
+    : `${upgrade.costFormula(currentLevel + 1)} scraps`;
   const effect = upgrade.effectFormula(currentLevel);
 
   upgButton.textContent = `${upgrade.name} (Lv ${currentLevel}/${upgrade.maxLevel}) | Cost: ${cost} | Effect: +${effect}`;
@@ -57,9 +58,10 @@ export function createUpgrade(upgrade: Upgrade) {
 }
 
 export function appendUpgradeText(upgrade: Upgrade, upgButton: HTMLElement) {
+  // guard clause if a node is missing or mistyped
   if (!upgrade || !upgButton) {
-    console.warn("No button or adom element for button, rendering,ts:38");
-    return; // Case if a node is missing or mistyped
+    console.warn("No button or DOM element for button");
+    return;
   }
   const currentNode = state.nodes[upgrade.id];
   if (!currentNode) {
@@ -104,6 +106,39 @@ export function drawAsteroid(
     ctx.arc(screenX, screenY, asteroid.radius, 0, Math.PI * 2);
     // optional aestethics
     ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
     ctx.fill();
   }
+}
+
+export function drawLaser(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  laser: Laser,
+  shipX: number,
+  shipY: number,
+) {
+  // Convert absolute world positions into screen positions matching your ship viewport tracking
+  const screenX = laser.worldX - shipX + canvas.width / 2;
+  const screenY = laser.worldY - shipY + canvas.height / 2;
+
+  // Simple offscreen check snippet
+  if (
+    screenX < 0 ||
+    screenX > canvas.width ||
+    screenY < 0 ||
+    screenY > canvas.height
+  ) {
+    return;
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  // Draw a small bright neon red projectile line
+  ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff3333";
+  ctx.shadowColor = "#ff0000"; // Optional space arcade glow effect
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
 }

@@ -20,8 +20,38 @@ window.addEventListener("DOMContentLoaded", () => {
     render();
 
     // Start drawing the game loop
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
   } else {
     console.warn("Could not find canvas and 2d context");
   }
 });
+
+interface GeometryObject {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  [key: string]: unknown;
+}
+// main function using bounding-box collision
+//* FIXME: Fix these bugs
+export function checkCollision(hitter: GeometryObject, target: GeometryObject) {
+  if (
+    hitter.x !== undefined &&
+    hitter.y !== undefined &&
+    hitter.width !== undefined &&
+    hitter.height !== undefined &&
+    target.x !== undefined &&
+    target.y !== undefined &&
+    target.width !== undefined &&
+    target.height !== undefined
+  ) {
+    return (
+      hitter.x < target.x + target.width &&
+      hitter.x + hitter.width > target.x &&
+      hitter.y < target.y + target.height &&
+      hitter.y + hitter.height > target.y
+    );
+    return false;
+  }
+}

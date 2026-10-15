@@ -1,3 +1,13 @@
+/* style.css */
+body {
+  background-color: #111;
+  color: #fff;
+  font-family: sans-serif;
+}
+
 canvas {
-  border: 2px solid black;
+  border: 2px solid #444;
+  background-color: #050508; /* Dark Space Background */
+  display: block;
+  margin-top: 10px;
 }
