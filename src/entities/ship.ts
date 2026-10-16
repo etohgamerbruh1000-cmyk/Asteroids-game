@@ -81,37 +81,6 @@ export function moveShipPosition(deltaTime: number) {
   ship.angle += ship.rotationSpeed * deltaTime;
 }
 
-export const activeLasers: Laser[] = [];
-export interface Laser {
-  worldX: number; // Tracks where it is in the world
-  worldY: number;
-  vx: number;
-  vy: number;
-  damage: number;
-}
-
-// TODO: Fix args being > than intended since i added new args for less declarations
-export function fireLaser(laserSpeed: number) {
-  // Calculate velocity vectors based on the ship's current angle
-  const vx = Math.cos(ship.angle) * laserSpeed;
-  const vy = Math.sin(ship.angle) * laserSpeed;
-  const newLaser: Laser = {
-    worldX: ship.x,
-    worldY: ship.y,
-    vx: vx,
-    vy: vy,
-    damage: 1,
-  };
-  activeLasers.push(newLaser);
-}
-
-export function tickLaser(deltaTime: number, laser: Laser) {
-  laser.worldX += laser.vx * deltaTime;
-  laser.worldY += laser.vy * deltaTime;
-
-  return laser;
-}
-
 // plural
 export function cleanLaserArray(
   canvas: HTMLCanvasElement,

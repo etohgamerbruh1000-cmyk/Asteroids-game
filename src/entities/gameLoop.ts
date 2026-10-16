@@ -1,16 +1,14 @@
 // gameLoop.ts
 // handles gameLoop, deltaTime
 
-import { checkCollision } from "../main.js";
 import { drawAsteroid, drawLaser } from "../rendering.js";
-import { asteroids, tickAsteroid } from "./asteroid.js";
+import { asteroids, checkCollision } from "./entities.js";
 import {
   activeLasers,
   checkKeystroke,
   cleanLaserArray,
   moveShipPosition,
   ship,
-  tickLaser,
 } from "./ship.js";
 
 // high-precision timestamp of current timestamp
@@ -61,19 +59,31 @@ export const gameLoop = (
   ctx.stroke();
   ctx.restore();
 
+  // moves asteroids, renders it
   for (const ast of asteroids) {
-    tickAsteroid(deltaTime, ast);
+    ast.tick(deltaTime);
     drawAsteroid(canvas, ctx, ast, ship.x, ship.y);
+    ast.drawHealthBar(canvas, ctx, ast.health)
   }
 
   for (const laser of activeLasers) {
-    tickLaser(deltaTime, laser);
-  }
-  cleanLaserArray(canvas, ship.x, ship.y);
-  for (const laser of activeLasers) {
+    laser.tick(deltaTime);
+
     drawLaser(canvas, ctx, laser, ship.x, ship.y);
-     checkCollision(laser, ast)
   }
 
+
+for (const let var var const const }=[[[[[[[[[[]]]]]]]]]]
+  // TODO: 7:40 AM: Work on fixing this
+
+  cleanLaserArray(canvas, ship.x, ship.y);
+
+  for (const laser of activeLasers) {
+    for (const ast of asteroids) {
+      if (checkCollision(laser, ast)) {
+        ast.health -= laser.laserDamage;
+      }
+    }
+  }
   requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
 };

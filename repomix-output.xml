@@ -147,32 +147,6 @@ export default defineConfig(
 );
 </file>
 
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asteroids</title>
-    <link rel="stylesheet" href="style.css" />
-    <script type="module" src="dist/main.js" defer></script>
-  </head>
-  <body>
-    <h2>Asteroids</h2>
-    <p>A web game in TS. kill 10,000 asteroids to reach the boss!</p>
-    <p id="lengthsCounter"></p>
-    <p id="scrapCounter"></p>
-
-    <div id="upgradeList">
-      <!-- dynamically rendered-->
-    </div>
-
-    <!--Absolute bottom - Don't put anything below here-->
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-  </body>
-</html>
-</file>
-
 <file path="README.md">
 ## README.md
 
@@ -249,22 +223,6 @@ My proposed file structure:
         └── antibiotic.ts # Antibiotic weapon logic, rendering, and collision radius
 </file>
 
-<file path="style.css">
-/* style.css */
-body {
-  background-color: #111;
-  color: #fff;
-  font-family: sans-serif;
-}
-
-canvas {
-  border: 2px solid #444;
-  background-color: #050508; /* Dark Space Background */
-  display: block;
-  margin-top: 10px;
-}
-</file>
-
 <file path="TODO.MD">
 ## TODO.MD
 
@@ -288,6 +246,79 @@ canvas {
     "skipLibCheck": true
   },
   "include": ["src/**/*"]
+}
+</file>
+
+<file path="src/state.ts">
+export interface GameState {
+  runtimeState: Record<string, number>;
+  currencies: {
+    asteroidsDestroyed: number;
+    scraps: number;
+    thrustEnergy: number;
+  };
+  currentRun: {
+    lengths: number;
+  };
+  nodes: Record<`N${number}`, { level: number }>;
+}
+
+export const state: GameState = {
+  runtimeState: {},
+  currencies: {
+    asteroidsDestroyed: 0,
+    scraps: 0,
+    thrustEnergy: 100,
+  },
+  currentRun: {
+    lengths: 0,
+  },
+  // Generates N1 through N10 automatically
+  nodes: Object.fromEntries(
+    Array.from({ length: 10 }, (_, i) => [`N${i + 1}`, { level: 0 }]),
+  ) as GameState["nodes"],
+};
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asteroids</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="dist/main.js" defer></script>
+  </head>
+  <body>
+    <h2>Asteroids</h2>
+    <p>A web game in TS. kill 10,000 asteroids to reach the boss!</p>
+    <p id="lengthsCounter"></p>
+    <p id="scrapCounter"></p>
+
+    <div id="upgradeList">
+      <!-- dynamically rendered-->
+    </div>
+
+    <!--Absolute bottom - Don't put anything below here-->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+  </body>
+</html>
+</file>
+
+<file path="style.css">
+/* style.css */
+body {
+  background-color: #111;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+canvas {
+  border: 2px solid #444;
+  background-color: #050508; /* Dark Space Background */
+  display: block;
+  margin-top: 10px;
 }
 </file>
 
@@ -338,17 +369,50 @@ export function tickAsteroid(deltaTime: number, asteroid: Asteroid) {
 
   return asteroid;
 }
+
+// bro
+// Laser and Asteroid
+class Entity {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vx: number;
+  vy: number;
+  // init
+  constructor(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    vx: 0,
+    vy: 0,
+  ) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.vx = vx;
+    this.vy = vy;
+  }
+  tick(deltaTime: number) {
+    this.vx += this.x * deltaTime;
+    this.vy += this.y * deltaTime;
+  }
+}
 </file>
 
 <file path="src/entities/gameLoop.ts">
 // gameLoop.ts
 // handles gameLoop, deltaTime
 
-import { cleanLaserArray, drawAsteroid, drawLaser } from "../rendering.js";
+import { checkCollision } from "../main.js";
+import { drawAsteroid, drawLaser } from "../rendering.js";
 import { asteroids, tickAsteroid } from "./asteroid.js";
 import {
   activeLasers,
   checkKeystroke,
+  cleanLaserArray,
   moveShipPosition,
   ship,
   tickLaser,
@@ -363,8 +427,9 @@ export function calculateDeltaTime(currentTime: number) {
   return deltaTime;
 }
 
-// main helper function
-
+//* main helper function
+// it is an arrow function because it needs 3 params,
+// meaning that the requestAnimFrame cannot hold 2+ params
 export const gameLoop = (
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
@@ -408,8 +473,11 @@ export const gameLoop = (
 
   for (const laser of activeLasers) {
     tickLaser(deltaTime, laser);
-    cleanLaserArray(canvas, ship.x, ship.y);
+  }
+  cleanLaserArray(canvas, ship.x, ship.y);
+  for (const laser of activeLasers) {
     drawLaser(canvas, ctx, laser, ship.x, ship.y);
+     checkCollision(laser, ast)
   }
 
   requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
@@ -485,7 +553,7 @@ export function checkKeystroke() {
   }
   if (pressedKeys.has("KeySpace")) {
     const now = performance.now();
-    if (now - ship.lastFireTime - ship.laserCooldown) {
+    if (now - ship.lastFireTime >= ship.laserCooldown) {
       fireLaser(200);
       ship.lastFireTime = now;
     }
@@ -530,6 +598,29 @@ export function tickLaser(deltaTime: number, laser: Laser) {
 
   return laser;
 }
+
+// plural
+export function cleanLaserArray(
+  canvas: HTMLCanvasElement,
+  shipX: number,
+  shipY: number,
+) {
+  for (let i = activeLasers.length - 1; i >= 0; i--) {
+    const laser = activeLasers[i];
+
+    // Calculate screen position relative to the camera/ship layout
+    const screenX = laser.worldX - shipX + canvas.width / 2;
+    const screenY = laser.worldY - shipY + canvas.height / 2;
+    if (
+      screenX < 0 ||
+      screenX > canvas.width ||
+      screenY < 0 ||
+      screenY > canvas.height
+    ) {
+      activeLasers.splice(i, 1);
+    }
+  }
+}
 </file>
 
 <file path="src/main.ts">
@@ -560,13 +651,43 @@ window.addEventListener("DOMContentLoaded", () => {
     console.warn("Could not find canvas and 2d context");
   }
 });
+
+interface GeometryObject {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  [key: string]: unknown;
+}
+// main function using bounding-box collision
+//* FIXME: Fix these bugs
+export function checkCollision(hitter: GeometryObject, target: GeometryObject) {
+  if (
+    hitter.x !== undefined &&
+    hitter.y !== undefined &&
+    hitter.width !== undefined &&
+    hitter.height !== undefined &&
+    target.x !== undefined &&
+    target.y !== undefined &&
+    target.width !== undefined &&
+    target.height !== undefined
+  ) {
+    return (
+      hitter.x < target.x + target.width &&
+      hitter.x + hitter.width > target.x &&
+      hitter.y < target.y + target.height &&
+      hitter.y + hitter.height > target.y
+    );
+    return false;
+  }
+}
 </file>
 
 <file path="src/rendering.ts">
 // rendering.ts
 // renders data shown. doesn't affect gameplay, only visuals!
 
-import { activeLasers, Laser } from "./entities/ship.js";
+import { Laser } from "./entities/ship.js";
 import { Asteroid } from "./entities/asteroid.js";
 import { buyNode, upgradeLibrary } from "./skillTree.js";
 import { state } from "./state.js";
@@ -707,29 +828,6 @@ export function drawLaser(
   ctx.fill();
   ctx.restore();
 }
-
-// plural
-export function cleanLaserArray(
-  canvas: HTMLCanvasElement,
-  shipX: number,
-  shipY: number,
-) {
-  for (let i = activeLasers.length - 1; i >= 0; i--) {
-    const laser = activeLasers[i];
-
-    // Calculate screen position relative to the camera/ship layout
-    const screenX = laser.worldX - shipX + canvas.width / 2;
-    const screenY = laser.worldY - shipY + canvas.height / 2;
-    if (
-      screenX < 0 ||
-      screenX > canvas.width ||
-      screenY < 0 ||
-      screenY > canvas.height
-    ) {
-      activeLasers.splice(i, 1);
-    }
-  }
-}
 </file>
 
 <file path="src/skillTree.ts">
@@ -759,7 +857,7 @@ export const upgradeLibrary: UpgradeLibrary = {
     name: "heavy-fuel-injection",
     maxLevel: 5,
     baseCost: 100,
-    costFormula: (level) => level * 30 + 100,
+    costFormula: (level) => 1 + level * 0.3, // mult
     effectFormula: (level) => level * 1.5,
   },
 };
@@ -812,37 +910,6 @@ function getNodeCost(node: UpgradeNode): number {
   const level = getNodeLevel(node);
   return Math.floor(node.baseCost * node.costFormula(level));
 }
-</file>
-
-<file path="src/state.ts">
-export interface GameState {
-  runtimeState: Record<string, number>;
-  currencies: {
-    asteroidsDestroyed: number;
-    scraps: number;
-    thrustEnergy: number;
-  };
-  currentRun: {
-    lengths: number;
-  };
-  nodes: Record<`N${number}`, { level: number }>;
-}
-
-export const state: GameState = {
-  runtimeState: {},
-  currencies: {
-    asteroidsDestroyed: 0,
-    scraps: 0,
-    thrustEnergy: 100,
-  },
-  currentRun: {
-    lengths: 0,
-  },
-  // Generates N1 through N10 automatically
-  nodes: Object.fromEntries(
-    Array.from({ length: 10 }, (_, i) => [`N${i + 1}`, { level: 0 }]),
-  ) as GameState["nodes"],
-};
 </file>
 
 <file path="package.json">
