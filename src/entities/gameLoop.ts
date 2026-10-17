@@ -1,12 +1,12 @@
 // gameLoop.ts
 // handles gameLoop, deltaTime
 
-import { drawAsteroid, drawLaser } from "../rendering.js";
-import { asteroids, checkCollision } from "./entities.js";
+import { checkCollision } from "../main.js";
+import { Asteroid, asteroids, gameEntities, Laser } from "./entities.js";
 import {
-  activeLasers,
   checkKeystroke,
   cleanLaserArray,
+  drawShip,
   moveShipPosition,
   ship,
 } from "./ship.js";
@@ -29,61 +29,48 @@ export const gameLoop = (
   currentTime: number,
 ): void => {
   const deltaTime = calculateDeltaTime(currentTime);
+
+  // 1. checks which key is being pressed and moves ship accordingly
   checkKeystroke();
   moveShipPosition(deltaTime);
-  // gaurd clause
+
   if (!ctx || !canvas) {
     console.warn("No ctx");
     return;
   }
 
+  // 2. clears canvas to prevent infinite trail of old frames
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Rendering the ship on the canvas
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
+  const activeLasers = gameEntities.filter(
+    (ent): ent is Laser => ent instanceof Laser,
+  );
+  cleanLaserArray(activeLasers, canvas, ship.x, ship.y);
+  gameEntities.forEach((ent) => {
+    if (ent instanceof Asteroid) {
+      // Alias 'ent' to 'ast' so your existing code works perfectly
+      const ast = ent;
 
-  ctx.save(); // 1. Save the clean, normal canvas state
-  ctx.translate(centerX, centerY);
-  ctx.rotate(ship.angle);
+      ast.tick(deltaTime);
+      ast.render(canvas, ctx, ship.x, ship.y);
+      ast.drawHealthBar(canvas, ctx, ship.x, ship.y);
+    } else if (ent instanceof Laser) {
+      // Alias 'ent' to 'laser'
+      const laser = ent;
 
-  ctx.beginPath();
+      laser.tick(deltaTime);
+      laser.render(canvas, ctx, ship.x, ship.y);
 
-  ctx.moveTo(15, 0);
-  ctx.lineTo(-10, -10);
-  ctx.lineTo(-10, 10);
-  ctx.closePath();
-
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.restore();
-
-  // moves asteroids, renders it
-  for (const ast of asteroids) {
-    ast.tick(deltaTime);
-    drawAsteroid(canvas, ctx, ast, ship.x, ship.y);
-    ast.drawHealthBar(canvas, ctx, ast.health)
-  }
-
-  for (const laser of activeLasers) {
-    laser.tick(deltaTime);
-
-    drawLaser(canvas, ctx, laser, ship.x, ship.y);
-  }
-
-
-for (const let var var const const }=[[[[[[[[[[]]]]]]]]]]
-  // TODO: 7:40 AM: Work on fixing this
-
-  cleanLaserArray(canvas, ship.x, ship.y);
-
-  for (const laser of activeLasers) {
-    for (const ast of asteroids) {
-      if (checkCollision(laser, ast)) {
-        ast.health -= laser.laserDamage;
+      // 2. Check this specific laser against ALL asteroids
+      for (const ast of asteroids) {
+        if (checkCollision(laser, ast)) {
+          ast.health -= laser.laserDamage;
+          // TODO: DELETE LASER UPON COLLISION
+          // *, but there will be a laser thing where it bounces off of asteroids
+        }
       }
     }
-  }
+  });
+
   requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
 };

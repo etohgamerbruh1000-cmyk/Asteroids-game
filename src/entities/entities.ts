@@ -1,8 +1,10 @@
-import { Ship } from "./ship";
+// entities.ts
+// contains the class code for Asteroids and Lasers
 
 // Maintain an array filled with asteroid objects
 export const asteroids: Asteroid[] = [];
 export const activeLasers: Laser[] = [];
+// main array filled with both asteroids and activeLasers
 export const gameEntities: Entity[] = [...asteroids, ...activeLasers];
 
 // helper API for a random range
@@ -46,10 +48,11 @@ export abstract class Entity {
     return Math.max(this.width, this.height);
   }
 
-  // Subclasses MUST implement this to define their unique visual style
+  //* Subclasses MUST implement this to define their unique visual style
   drawShape(ctx: CanvasRenderingContext2D, screenX: number, screenY: number) {
     // Left empty or throws an error as a boilerplate template
   }
+  // Main rendering function
   render(
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
@@ -70,6 +73,7 @@ export abstract class Entity {
       // hides the entity and skips rendering
       return;
     } else {
+      // drawShape can be anything since it is empty; subclasses can enter anything in it
       this.drawShape(ctx, shipX, shipY);
     }
   }
@@ -96,11 +100,11 @@ export class Asteroid extends Entity {
     this.radius = data.radius;
     this.health = data.health;
     this.maxHealth = data.maxHealth;
-    // main drawing function with relative scrolling equipped into it!
   }
   getPadding(): number {
     return this.radius;
   }
+  // new function
   drawShape(
     ctx: CanvasRenderingContext2D,
     screenX: number,
@@ -119,22 +123,22 @@ export class Asteroid extends Entity {
     shipX: number,
     shipY: number,
   ): void {
-    // 1. Calculate relative screen positions (matching your game's camera)
+    // 1. Calculate health percentage and smooth dynamic color
+    const hpPercent = Math.max(0, Math.min(1, this.health / this.maxHealth));
+    if (hpPercent >= 100) return;
+    // 2. Calculate relative screen positions (matching your game's camera)
     const screenX = this.worldX - shipX + canvas.width / 2;
     const screenY = this.worldY - shipY + canvas.height / 2;
 
-    // 2. Health Bar Dimensions
+    // 3. HealthBar Dimensions
     const barWidth = this.radius * 1.5; // Scale width based on asteroid size
     const barHeight = 6;
     const barX = screenX - barWidth / 2;
     const barY = screenY - this.radius - 12; // Position 12px above the asteroid
 
-    // 3. Draw Background (The empty dark track)
+    // 4. Draw Background (The empty dark track)
     ctx.fillStyle = "rgba(40, 40, 40, 0.7)";
     ctx.fillRect(barX, barY, barWidth, barHeight);
-
-    // 4. Calculate health percentage and smooth dynamic color
-    const hpPercent = Math.max(0, Math.min(1, this.health / this.maxHealth));
 
     // Smoothly maps 100% HP to 120 (Green) and 0% HP to 0 (Red)
     const hue = hpPercent * 120;
@@ -166,9 +170,11 @@ export function createAsteroid(input: Partial<Asteroid> = {}): Asteroid {
   const asteroid = new Asteroid(asteroidData);
 
   asteroids.push(asteroid);
+  // if you want to use it; optional, but helps
   return asteroid;
 }
 
+// uses the `randomRange` helper API to generate random properties for an asteroid
 export function randomizeAsteroid() {
   const radius = randomRange(20, 25);
   return {
@@ -198,7 +204,7 @@ export class Laser extends Entity {
     // 2. Set the unique laser property
     this.laserDamage = data.laserDamage;
   }
-
+  // no padding
   getPadding(): number {
     return 0;
   }
@@ -217,22 +223,4 @@ export class Laser extends Entity {
     ctx.fill();
     ctx.restore();
   }
-  fireLaser(laserSpeed: number, ship: Ship) {
-    // Calculate velocity vectors based on the ship's current angle
-    const vx = Math.cos(ship.angle) * laserSpeed;
-    const vy = Math.sin(ship.angle) * laserSpeed;
-    const laserData = {
-      worldX: ship.x,
-      worldY: ship.y,
-      vx: vx,
-      vy: vy,
-      laserDamage: 1,
-    };
-
-    const newLaser = new Laser(laserData);
-
-    activeLasers.push(newLaser);
-  }
 }
-
-

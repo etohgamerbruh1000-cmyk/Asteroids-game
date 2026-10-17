@@ -1,7 +1,8 @@
 // skillTree.ts
+// handles static definitions, purchasing nodes!
 
-// handles static definitions, purchasing
 // TODO: FIXME: rework upgrades to be better and more diverse
+// TODO: work on this.
 
 import { state, type GameState } from "./state.js";
 
@@ -24,19 +25,20 @@ export const upgradeLibrary: UpgradeLibrary = {
     name: "heavy-fuel-injection",
     maxLevel: 5,
     baseCost: 100,
-    costFormula: (level) => 1 + level * 0.3, // mult
+    costFormula: (level) => 1 + level * 0.3, // mult to baseCost
     effectFormula: (level) => level * 1.5,
   },
+  // ADD MORE LATER: I want to fix rendering
 };
 
-//* main function to buy a node.
+//* main function to buy a node, contains mainly helper functions
 export function buyNode(node: UpgradeNode): boolean {
   // 1. Checks for cost, maxed, and returns true if none match
   if (!checkUpgradeEligibility(node)) {
     return false;
   }
 
-  // 2. appplies node effect, depletes cost
+  // 2. applies node effect, depletes cost
   applyNodeEffect(node);
   depleteCosts(node);
   return true;
@@ -47,19 +49,22 @@ export function checkUpgradeEligibility(node: UpgradeNode): boolean {
   if (!node) {
     return false;
   }
-
   const currentLevel = getNodeLevel(node);
+
+  // 2. max level checking
   if (currentLevel >= node.maxLevel) {
     return false;
   }
 
   const cost = getNodeCost(node);
+  // 3. boolean for checking if an upgrade is affordable
   return state.currencies.scraps >= cost;
 }
 
 export function applyNodeEffect(node: UpgradeNode): number {
   const nextLevel = getNodeLevel(node) + 1;
   state.nodes[node.id].level += 1;
+  // TODO: Apply effect, not just add 1 to the level
   return nextLevel;
 }
 

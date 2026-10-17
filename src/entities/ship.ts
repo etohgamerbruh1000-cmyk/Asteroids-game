@@ -1,4 +1,7 @@
 // ship.ts
+// contains ship-related logic, ship is NOT a class since there is only one
+
+import { activeLasers, Laser } from "./entities.js";
 
 export interface Ship {
   x: number;
@@ -25,6 +28,23 @@ export const ship: Ship = {
   laserCooldown: 500, // milliseconds
   lastFireTime: 0,
 };
+
+export function fireLaser(laserSpeed: number, ship: Ship) {
+  // Calculate velocity vectors based on the ship's current angle
+  const vx = Math.cos(ship.angle) * laserSpeed;
+  const vy = Math.sin(ship.angle) * laserSpeed;
+  const laserData = {
+    worldX: ship.x,
+    worldY: ship.y,
+    vx: vx,
+    vy: vy,
+    laserDamage: 1,
+  };
+
+  const newLaser = new Laser(laserData);
+
+  activeLasers.push(newLaser);
+}
 
 const pressedKeys = new Set<string>();
 
@@ -67,7 +87,7 @@ export function checkKeystroke() {
   if (pressedKeys.has("KeySpace")) {
     const now = performance.now();
     if (now - ship.lastFireTime >= ship.laserCooldown) {
-      fireLaser(200);
+      fireLaser(200, ship);
       ship.lastFireTime = now;
     }
   }
@@ -82,7 +102,11 @@ export function moveShipPosition(deltaTime: number) {
 }
 
 // plural
+
+// TODO: change param calling since i added activeLAsers
+//* INFO: 5:30 PM,
 export function cleanLaserArray(
+  activeLasers: Laser[] = [],
   canvas: HTMLCanvasElement,
   shipX: number,
   shipY: number,
@@ -102,4 +126,28 @@ export function cleanLaserArray(
       activeLasers.splice(i, 1);
     }
   }
+}
+
+// used for init just for a clean codebase :D
+export function drawShip(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  ship: Ship,
+) {
+  ctx.save(); // 1. Save the clean, normal canvas state
+  ctx.translate(centerX, centerY);
+  ctx.rotate(ship.angle);
+
+  ctx.beginPath();
+
+  ctx.moveTo(15, 0);
+  ctx.lineTo(-10, -10);
+  ctx.lineTo(-10, 10);
+  ctx.closePath();
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
 }

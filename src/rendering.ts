@@ -1,13 +1,12 @@
 // rendering.ts
 // renders data shown. doesn't affect gameplay, only visuals!
 
-import { Laser } from "./entities/ship.js";
-import { Asteroid } from "./entities/entities.js";
 import { buyNode, upgradeLibrary } from "./skillTree.js";
 import { state } from "./state.js";
 export type Upgrade = (typeof upgradeLibrary)[keyof typeof upgradeLibrary];
 
 // main helper function
+// * WIP currently, as rendering isn't my top priority
 export function render(): void {
   renderStats();
 }
@@ -33,14 +32,18 @@ export const renderUpgrade = (upgrade: Upgrade): void => {
   });
 };
 
-// TODO: Think about this archu=itecture, pasted by ai since i was too lazy
+// TODO: Think about this archuitecture, pasted by ai since i was too lazy
 // Extracted text updates so they can run repeatedly per level up
 export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
   const currentNode = state.nodes[upgrade.id];
-  if (!currentNode) return;
+  if (!currentNode) {
+    console.warn("No node found");
+    return;
+  }
 
   const currentLevel = currentNode.level;
-  const isMaxed = currentLevel >= upgrade.maxLevel;
+  // returns a boolean depending on if the clause is matching
+  const isMaxed = currentLevel >= upgrade.maxLevel; // true/false
 
   const cost = isMaxed
     ? "MAXED"
@@ -65,8 +68,7 @@ export function appendUpgradeText(upgrade: Upgrade, upgButton: HTMLElement) {
   }
   const currentNode = state.nodes[upgrade.id];
   if (!currentNode) {
-    console.error("No node available.");
-
+    console.warn("No node available.");
     return;
   }
   const cost: number = upgrade.costFormula(currentNode.level + 1);

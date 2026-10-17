@@ -1,11 +1,13 @@
 // main.ts
+// loads up the game loop and initialization
+
 import { createAsteroid } from "./entities/entities.js";
 import { gameLoop } from "./entities/gameLoop.js";
-import {} from "./entities/ship.js";
+import { drawShip, ship } from "./entities/ship.js";
 import { renderUpgrade, render } from "./rendering.js";
 import { upgradeLibrary } from "./skillTree.js";
 
-// safeguard for html content loaded
+// safeguard for html content loading to prevent errors with initialization
 window.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
   const ctx = canvas?.getContext("2d");
@@ -19,6 +21,11 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     render();
 
+    // Initialization of variables
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    // Draws ship; just for clean codebase
+    drawShip(ctx, centerX, centerY, ship);
     // Start drawing the game loop
     requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
   } else {
@@ -26,7 +33,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Convert collision function to handle circle-to-circle or transform data properties cleanly
+//* Main collision function for collision checking
 export function checkCollision(
   laser: { worldX: number; worldY: number },
   ast: { worldX: number; worldY: number; radius: number },
