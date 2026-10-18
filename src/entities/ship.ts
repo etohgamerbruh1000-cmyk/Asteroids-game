@@ -16,6 +16,8 @@ export interface Ship {
   isThrusting: boolean;
   laserCooldown: number;
   lastFireTime: number;
+  health: number;
+  maxHealth: number;
 }
 export const ship: Ship = {
   x: 300,
@@ -27,6 +29,8 @@ export const ship: Ship = {
   isThrusting: false,
   laserCooldown: 500, // milliseconds
   lastFireTime: 0,
+  health: 20,
+  maxHealth: 20,
 };
 
 export function fireLaser(laserSpeed: number, ship: Ship) {
@@ -51,8 +55,9 @@ window.addEventListener("keydown", (event) => {
   // absolute position, key location doesn't matter
   pressedKeys.add(event.code);
 
-  if (pressedKeys.has("KeySpace")) {
+  if (pressedKeys.has("KeyJ")) {
     const now = performance.now();
+    console.log("FIRED LE LASER!!!!!");
     if (now - ship.lastFireTime >= ship.laserCooldown) {
       fireLaser(200, ship);
       ship.lastFireTime = now;
@@ -101,32 +106,7 @@ export function moveShipPosition(deltaTime: number) {
   ship.angle += ship.rotationSpeed * deltaTime;
 }
 
-// plural
 
-// TODO: change param calling since i added activeLAsers
-//* INFO: 5:30 PM,
-export function cleanLaserArray(
-  activeLasers: Laser[],
-  canvas: HTMLCanvasElement,
-  shipX: number,
-  shipY: number,
-) {
-  for (let i = activeLasers.length - 1; i >= 0; i--) {
-    const laser = activeLasers[i];
-
-    // Calculate screen position relative to the camera/ship layout
-    const screenX = laser.worldX - shipX + canvas.width / 2;
-    const screenY = laser.worldY - shipY + canvas.height / 2;
-    if (
-      screenX < 0 ||
-      screenX > canvas.width ||
-      screenY < 0 ||
-      screenY > canvas.height
-    ) {
-      activeLasers.splice(i, 1);
-    }
-  }
-}
 
 // used for init just for a clean codebase :D
 export function drawShip(

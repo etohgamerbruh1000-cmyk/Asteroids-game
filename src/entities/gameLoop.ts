@@ -26,8 +26,8 @@ export function calculateDeltaTime(currentTime: number) {
   return deltaTime;
 }
 const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
 //* main helper function
 // it is an arrow function because it needs 3 params,
 // meaning that the requestAnimFrame cannot hold 2+ params
@@ -60,10 +60,11 @@ export const gameLoop = (
     if (ent instanceof Asteroid) {
       // Alias 'ent' to 'ast' so your existing code works perfectly
       const ast = ent;
-
-      ast.tick(deltaTime);
-      ast.render(canvas, ctx, ship.x, ship.y);
-      ast.drawHealthBar(canvas, ctx, ship.x, ship.y);
+      if (!ast.checkDeath()) {
+        ast.tick(deltaTime);
+        ast.render(canvas, ctx, ship.x, ship.y);
+        ast.drawHealthBar(canvas, ctx, ship.x, ship.y);
+      }
     } else if (ent instanceof Laser) {
       // Alias 'ent' to 'laser'
       const laser = ent;
@@ -75,7 +76,6 @@ export const gameLoop = (
       for (const ast of asteroids) {
         if (checkCollision(laser, ast)) {
           ast.health -= laser.laserDamage;
-          // TODO: DELETE LASER UPON COLLISION
           // *, but there will be a laser thing where it bounces off of asteroids
         }
       }
@@ -84,3 +84,9 @@ export const gameLoop = (
 
   requestAnimationFrame((timestamp) => gameLoop(canvas, ctx, timestamp));
 };
+
+gameEntities.all = gameEntities.all.filter((ent) => {
+  if (ent instanceof Asteroid)
+const dead = 
+
+})

@@ -89,6 +89,33 @@ export abstract class Entity {
       this.drawShape(ctx, screenX, screenY);
     }
   }
+
+  // plural
+
+  // TODO: change param calling since i added activeLAsers
+  //* INFO: 5:30 PM
+  cleanLaserArray(
+    activeLasers: Laser[],
+    canvas: HTMLCanvasElement,
+    shipX: number,
+    shipY: number,
+  ) {
+    for (let i = activeLasers.length - 1; i >= 0; i--) {
+      const laser = activeLasers[i];
+
+      // Calculate screen position relative to the camera/ship layout
+      const screenX = laser.worldX - shipX + canvas.width / 2;
+      const screenY = laser.worldY - shipY + canvas.height / 2;
+      if (
+        screenX < 0 ||
+        screenX > canvas.width ||
+        screenY < 0 ||
+        screenY > canvas.height
+      ) {
+        activeLasers.splice(i, 1);
+      }
+    }
+  }
 }
 
 // extra properties: radius,hp,maxHP, specifically for Asteroid
@@ -163,6 +190,13 @@ export class Asteroid extends Entity {
     ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
     ctx.lineWidth = 1;
     ctx.strokeRect(barX, barY, barWidth, barHeight);
+  }
+  checkDeath() {
+    if (0 >= this.health) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
