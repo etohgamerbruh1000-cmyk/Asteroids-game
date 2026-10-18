@@ -6,12 +6,13 @@ import {
   activeLasers,
   Asteroid,
   asteroids,
+  cleanLasers,
   gameEntities,
   Laser,
 } from "./entities.js";
 import {
   checkKeystroke,
-  cleanLaserArray,
+
   drawShip,
   moveShipPosition,
   ship,
@@ -54,7 +55,7 @@ export const gameLoop = (
   // Draws ship; just for clean codebase
   drawShip(ctx, centerX, centerY, ship);
 
-  cleanLaserArray(activeLasers, canvas, ship.x, ship.y);
+  cleanLasers(activeLasers, canvas, ship.x, ship.y);
 
   gameEntities.all.forEach((ent) => {
     if (ent instanceof Asteroid) {

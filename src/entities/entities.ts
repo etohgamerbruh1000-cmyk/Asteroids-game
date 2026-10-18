@@ -92,32 +92,7 @@ export abstract class Entity {
 
   // plural
 
-  // TODO: change param calling since i added activeLAsers
-  //* INFO: 5:30 PM
-  cleanLaserArray(
-    activeLasers: Laser[],
-    canvas: HTMLCanvasElement,
-    shipX: number,
-    shipY: number,
-  ) {
-    for (let i = activeLasers.length - 1; i >= 0; i--) {
-      const laser = activeLasers[i];
-
-      // Calculate screen position relative to the camera/ship layout
-      const screenX = laser.worldX - shipX + canvas.width / 2;
-      const screenY = laser.worldY - shipY + canvas.height / 2;
-      if (
-        screenX < 0 ||
-        screenX > canvas.width ||
-        screenY < 0 ||
-        screenY > canvas.height
-      ) {
-        activeLasers.splice(i, 1);
-      }
-    }
-  }
 }
-
 // extra properties: radius,hp,maxHP, specifically for Asteroid
 export class Asteroid extends Entity {
   radius: number;
@@ -196,6 +171,42 @@ export class Asteroid extends Entity {
       return true;
     } else {
       return false;
+    }
+  }
+}
+
+
+// Clean your lasers based on screen boundaries
+export function cleanLasers(
+  lasers: Laser[],
+  canvas: HTMLCanvasElement,
+  shipX: number,
+  shipY: number,
+) {
+
+  for (let i = lasers.length - 1; i >= 0; i--) {
+    const laser = lasers[i];
+
+    const screenX = laser.worldX - shipX + canvas.width / 2;
+    const screenY = laser.worldY - shipY + canvas.height / 2;
+
+    // Lasers die when they leave the screen
+    const isOffScreen = screenX < 0 || screenX > canvas.width || screenY < 0 || screenY > canvas.height;
+
+    if (isOffScreen) {
+      lasers.splice(i, 1);
+    }
+  }
+}
+
+// Clean your asteroids based on health or screen boundaries
+export function cleanAsteroids(asteroidsArray: Asteroid[]) {
+  for (let i = asteroidsArray.length - 1; i >= 0; i--) {
+    const ast = asteroidsArray[i];
+
+    // Asteroids die when their health is gone (using your working checkDeath method)
+    if (ast.checkDeath()) {
+      asteroidsArray.splice(i, 1);
     }
   }
 }
