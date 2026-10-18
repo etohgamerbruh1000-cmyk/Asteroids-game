@@ -2,10 +2,17 @@
 // handles gameLoop, deltaTime
 
 import { checkCollision } from "../main.js";
-import { Asteroid, asteroids, gameEntities, Laser } from "./entities.js";
+import {
+  activeLasers,
+  Asteroid,
+  asteroids,
+  gameEntities,
+  Laser,
+} from "./entities.js";
 import {
   checkKeystroke,
   cleanLaserArray,
+  drawShip,
   moveShipPosition,
   ship,
 } from "./ship.js";
@@ -18,7 +25,9 @@ export function calculateDeltaTime(currentTime: number) {
   previousTime = currentTime;
   return deltaTime;
 }
-
+const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
 //* main helper function
 // it is an arrow function because it needs 3 params,
 // meaning that the requestAnimFrame cannot hold 2+ params
@@ -40,12 +49,14 @@ export const gameLoop = (
 
   // 2. clears canvas to prevent infinite trail of old frames
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Initialization of variables
 
-  const activeLasers = gameEntities.filter(
-    (ent): ent is Laser => ent instanceof Laser,
-  );
+  // Draws ship; just for clean codebase
+  drawShip(ctx, centerX, centerY, ship);
+
   cleanLaserArray(activeLasers, canvas, ship.x, ship.y);
-  gameEntities.forEach((ent) => {
+
+  gameEntities.all.forEach((ent) => {
     if (ent instanceof Asteroid) {
       // Alias 'ent' to 'ast' so your existing code works perfectly
       const ast = ent;
@@ -71,5 +82,5 @@ export const gameLoop = (
     }
   });
 
-  requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
+  requestAnimationFrame((timestamp) => gameLoop(canvas, ctx, timestamp));
 };

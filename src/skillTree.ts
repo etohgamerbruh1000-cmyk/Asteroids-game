@@ -66,12 +66,17 @@ export function checkUpgradeEligibility(node: UpgradeNode): boolean {
 export function applyNodeEffect(node: UpgradeNode): number {
   const nextLevel = getNodeLevel(node) + 1;
   state.nodes[node.id].level += 1;
-  // TODO: Apply effect, not just add 1 to the level
-  //* no different operations; multiplication is basically most of it anyways.
-  const upgStat: keyof GameState["currencies"] = node.affectedStat;
-  state.currencies[upgStat] *= (getNodeEffect(node, upgStat) ?? 1)
+
+  // Inline the type check directly into the key lookup!
+  const statKey = node.affectedStat as keyof GameState["currencies"];
+  
+  if (statKey in state.currencies) {
+    state.currencies[statKey] *= (getNodeEffect(node, statKey) ?? 1);
+  }
+  
   return nextLevel;
 }
+
 
 export function getNodeEffect(
   node: UpgradeNode,

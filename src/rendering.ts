@@ -20,9 +20,26 @@ export function render(): void {
 // Compact arrow function that returns the element
 export const doc = (id: string) => document.getElementById(id) as HTMLElement;
 
+// 1. Declare cache variables at the top of the file using 'let'
+let cachedScrap: HTMLElement | null = null;
+let cachedLengths: HTMLElement | null = null;
+
 export function renderStats(): void {
-  doc("scrapCounter").textContent = `Scraps: ${state.currencies.scraps}`;
-  doc("lengthsCounter").textContent = `Lengths: ${state.currentRun.lengths}L`;
+  // 2. Fetch the elements ONLY if they haven't been cached yet
+  if (!cachedScrap) {
+    cachedScrap = document.getElementById("scrapCounter");
+  }
+  if (!cachedLengths) {
+    cachedLengths = document.getElementById("lengthsCounter");
+  }
+
+  // 3. Update the text content safely
+  if (cachedScrap) {
+    cachedScrap.textContent = `Scraps: ${state.currencies.scraps}`;
+  }
+  if (cachedLengths) {
+    cachedLengths.textContent = `Lengths: ${state.currentRun.lengths}L`;
+  }
 }
 
 //* main rendering function
@@ -51,7 +68,7 @@ export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
   const isMaxed = currentLevel >= upgrade.maxLevel; // true/false
 
   const cost = isMaxed ? "MAXED" : `${getNodeCost(upgrade)} scraps`;
-  const upgStat: keyof GameState["currencies"] = upgrade.affectedStat;
+  const upgStat = upgrade.affectedStat as keyof GameState["currencies"];
   upgButton.textContent = `${upgrade.name} (Lv ${currentLevel}/${upgrade.maxLevel}) | Cost: ${cost} | Effect: x${getNodeEffect(upgrade, upgStat)}`;
 }
 

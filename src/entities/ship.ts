@@ -1,7 +1,7 @@
 // ship.ts
 // contains ship-related logic, ship is NOT a class since there is only one
 
-import { activeLasers, Laser } from "./entities.js";
+import { addLaser, Laser } from "./entities.js";
 
 export interface Ship {
   x: number;
@@ -42,8 +42,7 @@ export function fireLaser(laserSpeed: number, ship: Ship) {
   };
 
   const newLaser = new Laser(laserData);
-
-  activeLasers.push(newLaser);
+  addLaser(newLaser);
 }
 
 const pressedKeys = new Set<string>();
@@ -51,6 +50,14 @@ const pressedKeys = new Set<string>();
 window.addEventListener("keydown", (event) => {
   // absolute position, key location doesn't matter
   pressedKeys.add(event.code);
+
+  if (pressedKeys.has("KeySpace")) {
+    const now = performance.now();
+    if (now - ship.lastFireTime >= ship.laserCooldown) {
+      fireLaser(200, ship);
+      ship.lastFireTime = now;
+    }
+  }
 });
 
 window.addEventListener("keyup", (event) => {
@@ -84,13 +91,6 @@ export function checkKeystroke() {
   if (pressedKeys.has("KeyE")) {
     ship.rotationSpeed = -rotationSpeed;
   }
-  if (pressedKeys.has("KeySpace")) {
-    const now = performance.now();
-    if (now - ship.lastFireTime >= ship.laserCooldown) {
-      fireLaser(200, ship);
-      ship.lastFireTime = now;
-    }
-  }
 }
 
 // moves coordinates, not actual x+y position
@@ -106,7 +106,7 @@ export function moveShipPosition(deltaTime: number) {
 // TODO: change param calling since i added activeLAsers
 //* INFO: 5:30 PM,
 export function cleanLaserArray(
-  activeLasers: Laser[] = [],
+  activeLasers: Laser[],
   canvas: HTMLCanvasElement,
   shipX: number,
   shipY: number,

@@ -3,7 +3,6 @@
 
 import { createAsteroid } from "./entities/entities.js";
 import { gameLoop } from "./entities/gameLoop.js";
-import { drawShip, ship } from "./entities/ship.js";
 import { renderUpgrade, render } from "./rendering.js";
 import { upgradeLibrary } from "./skillTree.js";
 
@@ -21,11 +20,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     render();
 
-    // Initialization of variables
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    // Draws ship; just for clean codebase
-    drawShip(ctx, centerX, centerY, ship);
     // Start drawing the game loop
     requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
   } else {
@@ -69,10 +63,18 @@ export function increaseStat(
   state: GameState,
   category: "currencies" | "currentRun",
   key: string,
-  amount = 1, // Default values go here!
+  amount = 1,
 ) {
-  // FIXED: Changed 'unknown' to 'any' so JavaScript can dynamically read the key
-  (state[category] as any)[key] += amount;
+  // Cast the sub-object as a Record mapping string keys to number values
+  const targetCategory = state[category] as Record<string, number>;
+
+  // Safely check if the key exists before adding to avoid NaN errors
+  if (key in targetCategory) {
+    targetCategory[key] += amount;
+  } else {
+    console.warn(`Key "${key}" does not exist in state.${category}`);
+  }
+
   render();
   console.log(`Gained ${amount} ${key}!`);
 }

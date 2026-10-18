@@ -5,8 +5,16 @@
 export const asteroids: Asteroid[] = [];
 export const activeLasers: Laser[] = [];
 // main array filled with both asteroids and activeLasers
-export const gameEntities: Entity[] = [...asteroids, ...activeLasers];
+export const gameEntities = {
+  get all() {
+    return [...asteroids, ...activeLasers];
+  },
+};
 
+// fix for pushing new projectile objects into a copied references array local to that module context.
+export function addLaser(laser: Laser) {
+  activeLasers.push(laser);
+}
 // helper API for a random range
 const randomRange = (min: number, max: number): number =>
   Math.random() * (max - min) + min;
@@ -49,7 +57,11 @@ export abstract class Entity {
   }
 
   //* Subclasses MUST implement this to define their unique visual style
-  drawShape(ctx: CanvasRenderingContext2D, screenX: number, screenY: number) {
+  drawShape(
+    _ctx: CanvasRenderingContext2D,
+    _screenX: number,
+    _screenY: number,
+  ) {
     // Left empty or throws an error as a boilerplate template
   }
   // Main rendering function
@@ -74,7 +86,7 @@ export abstract class Entity {
       return;
     } else {
       // drawShape can be anything since it is empty; subclasses can enter anything in it
-      this.drawShape(ctx, shipX, shipY);
+      this.drawShape(ctx, screenX, screenY);
     }
   }
 }
@@ -204,9 +216,10 @@ export class Laser extends Entity {
     // 2. Set the unique laser property
     this.laserDamage = data.laserDamage;
   }
-  // no padding
+
+  // Give it a minor padding radius so the camera doesn't cull it instantly at 0
   getPadding(): number {
-    return 0;
+    return 5;
   }
   drawShape(
     ctx: CanvasRenderingContext2D,

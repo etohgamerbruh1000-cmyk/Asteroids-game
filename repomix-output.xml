@@ -154,8 +154,11 @@ export default defineConfig(
 export const asteroids: Asteroid[] = [];
 export const activeLasers: Laser[] = [];
 // main array filled with both asteroids and activeLasers
-export const gameEntities: Entity[] = [...asteroids, ...activeLasers];
-
+export const gameEntities = {
+  get all() {
+    return [...asteroids, ...activeLasers];
+  },
+};
 // helper API for a random range
 const randomRange = (min: number, max: number): number =>
   Math.random() * (max - min) + min;
@@ -223,7 +226,7 @@ export abstract class Entity {
       return;
     } else {
       // drawShape can be anything since it is empty; subclasses can enter anything in it
-      this.drawShape(ctx, shipX, shipY);
+      this.drawShape(ctx, screenX, screenY);
     }
   }
 }
@@ -353,9 +356,10 @@ export class Laser extends Entity {
     // 2. Set the unique laser property
     this.laserDamage = data.laserDamage;
   }
-  // no padding
+
+  // Give it a minor padding radius so the camera doesn't cull it instantly at 0
   getPadding(): number {
-    return 0;
+    return 5;
   }
   drawShape(
     ctx: CanvasRenderingContext2D,
@@ -538,6 +542,162 @@ canvas {
 }
 </file>
 
+<file path="src/entities/ship.ts">
+// ship.ts
+// contains ship-related logic, ship is NOT a class since there is only one
+
+import { activeLasers, Laser } from "./entities.js";
+
+export interface Ship {
+  x: number;
+  y: number;
+  radius: number;
+  angle: number;
+  rotationSpeed: number;
+  thrust: {
+    x: number;
+    y: number;
+  };
+  isThrusting: boolean;
+  laserCooldown: number;
+  lastFireTime: number;
+}
+export const ship: Ship = {
+  x: 300,
+  y: 400,
+  thrust: { x: 0, y: 0 },
+  radius: 15, // size in px
+  angle: 0, // radians
+  rotationSpeed: 0.01, // rad/tick
+  isThrusting: false,
+  laserCooldown: 500, // milliseconds
+  lastFireTime: 0,
+};
+
+export function fireLaser(laserSpeed: number, ship: Ship) {
+  // Calculate velocity vectors based on the ship's current angle
+  const vx = Math.cos(ship.angle) * laserSpeed;
+  const vy = Math.sin(ship.angle) * laserSpeed;
+  const laserData = {
+    worldX: ship.x,
+    worldY: ship.y,
+    vx: vx,
+    vy: vy,
+    laserDamage: 1,
+  };
+
+  const newLaser = new Laser(laserData);
+
+  activeLasers.push(newLaser);
+}
+
+const pressedKeys = new Set<string>();
+
+window.addEventListener("keydown", (event) => {
+  // absolute position, key location doesn't matter
+  pressedKeys.add(event.code);
+});
+
+window.addEventListener("keyup", (event) => {
+  pressedKeys.delete(event.code);
+});
+// runs every game tick!!!
+export function checkKeystroke() {
+  const speed = 200;
+  const rotationSpeed = 2;
+  ship.thrust.x = 0;
+  ship.thrust.y = 0;
+  ship.rotationSpeed = 0;
+
+  // TODO: Add actual acceleration instead of static force
+  if (pressedKeys.has("KeyW")) {
+    ship.thrust.y = -speed;
+  }
+  if (pressedKeys.has("KeyS")) {
+    ship.thrust.y = speed;
+  }
+  if (pressedKeys.has("KeyA")) {
+    ship.thrust.x = -speed;
+  }
+  if (pressedKeys.has("KeyD")) {
+    ship.thrust.x = speed;
+  }
+  // rotationq
+  if (pressedKeys.has("KeyQ")) {
+    ship.rotationSpeed = rotationSpeed;
+  }
+  if (pressedKeys.has("KeyE")) {
+    ship.rotationSpeed = -rotationSpeed;
+  }
+  if (pressedKeys.has("KeySpace")) {
+    const now = performance.now();
+    if (now - ship.lastFireTime >= ship.laserCooldown) {
+      fireLaser(200, ship);
+      ship.lastFireTime = now;
+    }
+  }
+}
+
+// moves coordinates, not actual x+y position
+export function moveShipPosition(deltaTime: number) {
+  ship.x += ship.thrust.x * deltaTime; // adjusts accordingly to fps
+  ship.y += ship.thrust.y * deltaTime;
+
+  ship.angle += ship.rotationSpeed * deltaTime;
+}
+
+// plural
+
+// TODO: change param calling since i added activeLAsers
+//* INFO: 5:30 PM,
+export function cleanLaserArray(
+  activeLasers: Laser[],
+  canvas: HTMLCanvasElement,
+  shipX: number,
+  shipY: number,
+) {
+  for (let i = activeLasers.length - 1; i >= 0; i--) {
+    const laser = activeLasers[i];
+
+    // Calculate screen position relative to the camera/ship layout
+    const screenX = laser.worldX - shipX + canvas.width / 2;
+    const screenY = laser.worldY - shipY + canvas.height / 2;
+    if (
+      screenX < 0 ||
+      screenX > canvas.width ||
+      screenY < 0 ||
+      screenY > canvas.height
+    ) {
+      activeLasers.splice(i, 1);
+    }
+  }
+}
+
+// used for init just for a clean codebase :D
+export function drawShip(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  ship: Ship,
+) {
+  ctx.save(); // 1. Save the clean, normal canvas state
+  ctx.translate(centerX, centerY);
+  ctx.rotate(ship.angle);
+
+  ctx.beginPath();
+
+  ctx.moveTo(15, 0);
+  ctx.lineTo(-10, -10);
+  ctx.lineTo(-10, 10);
+  ctx.closePath();
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+</file>
+
 <file path="src/skillTree.ts">
 // skillTree.ts
 // handles static definitions, purchasing nodes!
@@ -652,10 +812,17 @@ export function getNodeCost(node: UpgradeNode): number {
 // handles gameLoop, deltaTime
 
 import { checkCollision } from "../main.js";
-import { Asteroid, asteroids, gameEntities, Laser } from "./entities.js";
+import {
+  activeLasers,
+  Asteroid,
+  asteroids,
+  gameEntities,
+  Laser,
+} from "./entities.js";
 import {
   checkKeystroke,
   cleanLaserArray,
+  drawShip,
   moveShipPosition,
   ship,
 } from "./ship.js";
@@ -690,12 +857,15 @@ export const gameLoop = (
 
   // 2. clears canvas to prevent infinite trail of old frames
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Initialization of variables
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  // Draws ship; just for clean codebase
+  drawShip(ctx, centerX, centerY, ship);
 
-  const activeLasers = gameEntities.filter(
-    (ent): ent is Laser => ent instanceof Laser,
-  );
   cleanLaserArray(activeLasers, canvas, ship.x, ship.y);
-  gameEntities.forEach((ent) => {
+
+  gameEntities.all.forEach((ent) => {
     if (ent instanceof Asteroid) {
       // Alias 'ent' to 'ast' so your existing code works perfectly
       const ast = ent;
@@ -721,164 +891,8 @@ export const gameLoop = (
     }
   });
 
-  requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
+  requestAnimationFrame((timestamp) => gameLoop(canvas, ctx, timestamp));
 };
-</file>
-
-<file path="src/entities/ship.ts">
-// ship.ts
-// contains ship-related logic, ship is NOT a class since there is only one
-
-import { activeLasers, Laser } from "./entities.js";
-
-export interface Ship {
-  x: number;
-  y: number;
-  radius: number;
-  angle: number;
-  rotationSpeed: number;
-  thrust: {
-    x: number;
-    y: number;
-  };
-  isThrusting: boolean;
-  laserCooldown: number;
-  lastFireTime: number;
-}
-export const ship: Ship = {
-  x: 300,
-  y: 400,
-  thrust: { x: 0, y: 0 },
-  radius: 15, // size in px
-  angle: 0, // radians
-  rotationSpeed: 0.01, // rad/tick
-  isThrusting: false,
-  laserCooldown: 500, // milliseconds
-  lastFireTime: 0,
-};
-
-export function fireLaser(laserSpeed: number, ship: Ship) {
-  // Calculate velocity vectors based on the ship's current angle
-  const vx = Math.cos(ship.angle) * laserSpeed;
-  const vy = Math.sin(ship.angle) * laserSpeed;
-  const laserData = {
-    worldX: ship.x,
-    worldY: ship.y,
-    vx: vx,
-    vy: vy,
-    laserDamage: 1,
-  };
-
-  const newLaser = new Laser(laserData);
-
-  activeLasers.push(newLaser);
-}
-
-const pressedKeys = new Set<string>();
-
-window.addEventListener("keydown", (event) => {
-  // absolute position, key location doesn't matter
-  pressedKeys.add(event.code);
-});
-
-window.addEventListener("keyup", (event) => {
-  pressedKeys.delete(event.code);
-});
-// runs every game tick!!!
-export function checkKeystroke() {
-  const speed = 200;
-  const rotationSpeed = 2;
-  ship.thrust.x = 0;
-  ship.thrust.y = 0;
-  ship.rotationSpeed = 0;
-
-  // TODO: Add actual acceleration instead of static force
-  if (pressedKeys.has("KeyW")) {
-    ship.thrust.y = -speed;
-  }
-  if (pressedKeys.has("KeyS")) {
-    ship.thrust.y = speed;
-  }
-  if (pressedKeys.has("KeyA")) {
-    ship.thrust.x = -speed;
-  }
-  if (pressedKeys.has("KeyD")) {
-    ship.thrust.x = speed;
-  }
-  // rotationq
-  if (pressedKeys.has("KeyQ")) {
-    ship.rotationSpeed = rotationSpeed;
-  }
-  if (pressedKeys.has("KeyE")) {
-    ship.rotationSpeed = -rotationSpeed;
-  }
-  if (pressedKeys.has("KeySpace")) {
-    const now = performance.now();
-    if (now - ship.lastFireTime >= ship.laserCooldown) {
-      fireLaser(200, ship);
-      ship.lastFireTime = now;
-    }
-  }
-}
-
-// moves coordinates, not actual x+y position
-export function moveShipPosition(deltaTime: number) {
-  ship.x += ship.thrust.x * deltaTime; // adjusts accordingly to fps
-  ship.y += ship.thrust.y * deltaTime;
-
-  ship.angle += ship.rotationSpeed * deltaTime;
-}
-
-// plural
-
-// TODO: change param calling since i added activeLAsers
-//* INFO: 5:30 PM,
-export function cleanLaserArray(
-  activeLasers: Laser[] = [],
-  canvas: HTMLCanvasElement,
-  shipX: number,
-  shipY: number,
-) {
-  for (let i = activeLasers.length - 1; i >= 0; i--) {
-    const laser = activeLasers[i];
-
-    // Calculate screen position relative to the camera/ship layout
-    const screenX = laser.worldX - shipX + canvas.width / 2;
-    const screenY = laser.worldY - shipY + canvas.height / 2;
-    if (
-      screenX < 0 ||
-      screenX > canvas.width ||
-      screenY < 0 ||
-      screenY > canvas.height
-    ) {
-      activeLasers.splice(i, 1);
-    }
-  }
-}
-
-// used for init just for a clean codebase :D
-export function drawShip(
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  ship: Ship,
-) {
-  ctx.save(); // 1. Save the clean, normal canvas state
-  ctx.translate(centerX, centerY);
-  ctx.rotate(ship.angle);
-
-  ctx.beginPath();
-
-  ctx.moveTo(15, 0);
-  ctx.lineTo(-10, -10);
-  ctx.lineTo(-10, 10);
-  ctx.closePath();
-
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.restore();
-}
 </file>
 
 <file path="src/main.ts">
@@ -887,7 +901,6 @@ export function drawShip(
 
 import { createAsteroid } from "./entities/entities.js";
 import { gameLoop } from "./entities/gameLoop.js";
-import { drawShip, ship } from "./entities/ship.js";
 import { renderUpgrade, render } from "./rendering.js";
 import { upgradeLibrary } from "./skillTree.js";
 
@@ -905,11 +918,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     render();
 
-    // Initialization of variables
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    // Draws ship; just for clean codebase
-    drawShip(ctx, centerX, centerY, ship);
     // Start drawing the game loop
     requestAnimationFrame((currentTime) => gameLoop(canvas, ctx, currentTime));
   } else {
@@ -1019,9 +1027,26 @@ export function render(): void {
 // Compact arrow function that returns the element
 export const doc = (id: string) => document.getElementById(id) as HTMLElement;
 
+// 1. Declare cache variables at the top of the file using 'let'
+let cachedScrap: HTMLElement | null = null;
+let cachedLengths: HTMLElement | null = null;
+
 export function renderStats(): void {
-  doc("scrapCounter").textContent = `Scraps: ${state.currencies.scraps}`;
-  doc("lengthsCounter").textContent = `Lengths: ${state.currentRun.lengths}L`;
+  // 2. Fetch the elements ONLY if they haven't been cached yet
+  if (!cachedScrap) {
+    cachedScrap = document.getElementById("scrapCounter");
+  }
+  if (!cachedLengths) {
+    cachedLengths = document.getElementById("lengthsCounter");
+  }
+
+  // 3. Update the text content safely
+  if (cachedScrap) {
+    cachedScrap.textContent = `Scraps: ${state.currencies.scraps}`;
+  }
+  if (cachedLengths) {
+    cachedLengths.textContent = `Lengths: ${state.currentRun.lengths}L`;
+  }
 }
 
 //* main rendering function
