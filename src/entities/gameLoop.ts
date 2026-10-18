@@ -6,7 +6,6 @@ import { Asteroid, asteroids, gameEntities, Laser } from "./entities.js";
 import {
   checkKeystroke,
   cleanLaserArray,
-  drawShip,
   moveShipPosition,
   ship,
 } from "./ship.js";

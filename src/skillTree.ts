@@ -1,10 +1,10 @@
 // skillTree.ts
 // handles static definitions, purchasing nodes!
 
+import { state, type GameState } from "./main.js";
+
 // TODO: FIXME: rework upgrades to be better and more diverse
 // TODO: work on this.
-
-import { state, type GameState } from "./state.js";
 
 type UpgradeNodeId = keyof GameState["nodes"];
 
@@ -13,6 +13,7 @@ interface UpgradeNode {
   name: string;
   maxLevel: number;
   baseCost: number;
+  affectedStat: string;
   costFormula: (level: number) => number;
   effectFormula: (level: number) => number;
 }
@@ -25,6 +26,7 @@ export const upgradeLibrary: UpgradeLibrary = {
     name: "heavy-fuel-injection",
     maxLevel: 5,
     baseCost: 100,
+    affectedStat: "thrustEnergy",
     costFormula: (level) => 1 + level * 0.3, // mult to baseCost
     effectFormula: (level) => level * 1.5,
   },
@@ -65,7 +67,27 @@ export function applyNodeEffect(node: UpgradeNode): number {
   const nextLevel = getNodeLevel(node) + 1;
   state.nodes[node.id].level += 1;
   // TODO: Apply effect, not just add 1 to the level
+  //* no different operations; multiplication is basically most of it anyways.
+  const upgStat: keyof GameState["currencies"] = node.affectedStat;
+  state.currencies[upgStat] *= (getNodeEffect(node, upgStat) ?? 1)
   return nextLevel;
+}
+
+export function getNodeEffect(
+  node: UpgradeNode,
+  upgStat: keyof GameState["currencies"],
+) {
+  if (upgStat in state.currencies) {
+    const matchingNode = Object.values(state.nodes).find(
+      (u) => u.id === state.nodes[node.id].id,
+    );
+    if (!matchingNode) {
+      console.warn("No matching node :(");
+      return;
+    }
+
+    return node.effectFormula(matchingNode.level);
+  }
 }
 
 export function depleteCosts(node: UpgradeNode): number {
@@ -78,7 +100,7 @@ function getNodeLevel(node: UpgradeNode): number {
   return state.nodes[node.id].level;
 }
 
-function getNodeCost(node: UpgradeNode): number {
+export function getNodeCost(node: UpgradeNode): number {
   const level = getNodeLevel(node);
   return Math.floor(node.baseCost * node.costFormula(level));
 }

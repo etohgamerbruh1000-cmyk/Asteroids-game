@@ -1,8 +1,14 @@
 // rendering.ts
 // renders data shown. doesn't affect gameplay, only visuals!
 
-import { buyNode, upgradeLibrary } from "./skillTree.js";
-import { state } from "./state.js";
+import { state, GameState } from "./main.js";
+import {
+  buyNode,
+  getNodeCost,
+  getNodeEffect,
+  upgradeLibrary,
+} from "./skillTree.js";
+
 export type Upgrade = (typeof upgradeLibrary)[keyof typeof upgradeLibrary];
 
 // main helper function
@@ -15,14 +21,14 @@ export function render(): void {
 export const doc = (id: string) => document.getElementById(id) as HTMLElement;
 
 export function renderStats(): void {
-  doc("lengthsCounter").textContent = `Scraps: ${state.currencies.scraps}`;
-  doc("scrapCounter").textContent = `Lengths: ${state.currentRun.lengths}`;
+  doc("scrapCounter").textContent = `Scraps: ${state.currencies.scraps}`;
+  doc("lengthsCounter").textContent = `Lengths: ${state.currentRun.lengths}L`;
 }
 
-// main rendering function
+//* main rendering function
 export const renderUpgrade = (upgrade: Upgrade): void => {
   const upgButton = createUpgrade(upgrade);
-  appendUpgradeText(upgrade, upgButton);
+  updateButtonText(upgrade, upgButton);
 
   upgButton.addEventListener("click", function () {
     const eligible = buyNode(upgrade);
@@ -32,7 +38,6 @@ export const renderUpgrade = (upgrade: Upgrade): void => {
   });
 };
 
-// TODO: Think about this archuitecture, pasted by ai since i was too lazy
 // Extracted text updates so they can run repeatedly per level up
 export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
   const currentNode = state.nodes[upgrade.id];
@@ -45,35 +50,14 @@ export function updateButtonText(upgrade: Upgrade, upgButton: HTMLElement) {
   // returns a boolean depending on if the clause is matching
   const isMaxed = currentLevel >= upgrade.maxLevel; // true/false
 
-  const cost = isMaxed
-    ? "MAXED"
-    : `${upgrade.costFormula(currentLevel + 1)} scraps`;
-  const effect = upgrade.effectFormula(currentLevel);
-
-  upgButton.textContent = `${upgrade.name} (Lv ${currentLevel}/${upgrade.maxLevel}) | Cost: ${cost} | Effect: +${effect}`;
+  const cost = isMaxed ? "MAXED" : `${getNodeCost(upgrade)} scraps`;
+  const upgStat: keyof GameState["currencies"] = upgrade.affectedStat;
+  upgButton.textContent = `${upgrade.name} (Lv ${currentLevel}/${upgrade.maxLevel}) | Cost: ${cost} | Effect: x${getNodeEffect(upgrade, upgStat)}`;
 }
 
 export function createUpgrade(upgrade: Upgrade) {
   const upgButton = document.createElement("button");
   upgButton.id = `button-${upgrade.id}`;
-
-  return upgButton;
-}
-
-export function appendUpgradeText(upgrade: Upgrade, upgButton: HTMLElement) {
-  // guard clause if a node is missing or mistyped
-  if (!upgrade || !upgButton) {
-    console.warn("No button or DOM element for button");
-    return;
-  }
-  const currentNode = state.nodes[upgrade.id];
-  if (!currentNode) {
-    console.warn("No node available.");
-    return;
-  }
-  const cost: number = upgrade.costFormula(currentNode.level + 1);
-  const effect = upgrade.effectFormula(currentNode.level + 1);
-  upgButton.textContent = `Cost: ${cost} scraps.
-  Effect: ${effect}`;
   doc("upgradeList").appendChild(upgButton);
+  return upgButton;
 }
